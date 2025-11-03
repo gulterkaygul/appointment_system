@@ -6,7 +6,7 @@ from datetime import datetime
 
 app = FastAPI()
 
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine) // artik tablolari alembic ile migration olusturup uygulayacagiz.
 
 #Veritabanı bağlantısı (Dependency)
 def get_db():

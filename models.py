@@ -4,6 +4,7 @@ from database import Base
 
 class Patient(Base):
     __tablename__ = "patients"
+    __table_args__ = {"schema": "public"} 
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
@@ -14,9 +15,10 @@ class Patient(Base):
 
 class Appointment(Base):
     __tablename__ = "appointments"
+    __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("patients.id"))
+    patient_id = Column(Integer, ForeignKey("public.patients.id"))
     doctor_name = Column(String)  # Hangi doktor
     appointment_time = Column(DateTime)  # Randevu tarihi ve saati
     status = Column(String, default="planned")  # planned, completed, canceled
