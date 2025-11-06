@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Virtual environments
+venv/
+env/
+
+# Node.js
+node_modules/
+dist/
+build/
+
+# Alembic cache
+alembic/versions/__pycache__/
+alembic/__pycache__/
+# Ek güvenlik (bazı sistemlerde oluşabiliyor)
+lib/
+lib64/
+
+# Pytest ve log dosyaları
+*.log
+.coverage
+htmlcov/
+
+# IDE / Editör dosyaları
+.vscode/
+.idea/
+
+# Mac & Linux sistem dosyaları
+.DS_Store

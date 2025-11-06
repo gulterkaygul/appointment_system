@@ -1,14 +1,27 @@
-from fastapi import FastAPI, Depends, HTTPException
+# main.py
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from database import SessionLocal, Base, engine
+from pydantic import BaseModel
+from typing import List
 import crud, models
-from datetime import datetime
+from database import SessionLocal, engine
 
-app = FastAPI()
+# Eğer modellerde Base.metadata.create_all kullandıysan (development)
+models.Base.metadata.create_all(bind=engine)
 
-#Base.metadata.create_all(bind=engine) // artik tablolari alembic ile migration olusturup uygulayacagiz.
+app = FastAPI(title="Dentist Appointment System")
 
-#Veritabanı bağlantısı (Dependency)
+# CORS - geliştirme için geniş izin veriyoruz (production'da kısıtla)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -16,73 +29,84 @@ def get_db():
     finally:
         db.close()
 
+# Pydantic modeller (request/response schemas)
+class PatientCreate(BaseModel):
+    name: str
+    phone: str
+
+class PatientOut(BaseModel):
+    id: int
+    name: str
+    phone: str
+    class Config:
+        orm_mode = True
+
+class AppointmentCreate(BaseModel):
+    patient_id: int
+    date: str   # ISO string from frontend (e.g. "2025-11-05T15:00:00")
+
+class AppointmentOut(BaseModel):
+    id: int
+    patient_id: int
+    date: str
+    class Config:
+        orm_mode = True
+
 @app.get("/")
 def home():
     return {"message": "Welcome to the Appointment System!"}
 
-#patients endpoints
-@app.post("/patients/")
-def create_patient(name: str, phone: str, db: Session = Depends(get_db)):
-    patient = crud.create_patient(db, name=name, phone=phone)
-    return {"id": patient.id, "name": patient.name, "phone": patient.phone}
+# ---------- Patients ----------
+@app.post("/patients/", response_model=PatientOut, status_code=status.HTTP_201_CREATED)
+def create_patient(payload: PatientCreate, db: Session = Depends(get_db)):
+    new_patient = crud.create_patient(db, name=payload.name, phone=payload.phone)
+    return new_patient
 
-@app.get("/patients/")
+@app.get("/patients/", response_model=List[PatientOut])
 def list_patients(db: Session = Depends(get_db)):
-    patients = db.query(models.Patient).all()
-    return patients
+    return crud.get_patients(db)
 
-@app.put("/patients/{patient_id}")
-def update_patient(patient_id: int, name: str, phone: str, db: Session = Depends(get_db)):
-    patient = db.query(models.Patient).filter(models.Patient.id == patient_id).first()
+@app.get("/patients/{patient_id}", response_model=PatientOut)
+def get_patient(patient_id: int, db: Session = Depends(get_db)):
+    patient = crud.get_patient(db, patient_id)
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
-    patient.name = name
-    patient.phone = phone
-    db.commit()
-    db.refresh(patient)
     return patient
 
-@app.delete("/patients/{patient_id}")
-def delete_patient(patient_id: int, db: Session = Depends(get_db)):
-    patient = db.query(models.Patient).filter(models.Patient.id == patient_id).first()
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
-    db.delete(patient)
-    db.commit()
-    return {"detail": "Patient deleted"}
-
-#appointments endpoints
-@app.post("/appointments/")
-def create_appointment(patient_id: int, doctor_name: str, appointment_time: datetime, db: Session = Depends(get_db)):
-    appointment = crud.create_appointment(db, patient_id=patient_id, doctor_name=doctor_name, appointment_time=appointment_time)
-    return {
-        "id": appointment.id,
-        "doctor_name": appointment.doctor_name,
-        "appointment_time": appointment.appointment_time,
-        "status": appointment.status
-    }
-
-@app.get("/appointments/")
-def get_appointments(db: Session = Depends(get_db)):
-    return crud.get_appointments(db)
-
-@app.get("/appointments/{appointment_id}")
-def get_appointment_by_id(appointment_id: int, db: Session = Depends(get_db)):
-    appointment = crud.get_appointment_by_id(db, appointment_id=appointment_id)
-    if not appointment:
-        raise HTTPException(status_code=404, detail="Appointment not found")
-    return appointment
-
-@app.put("/appointments/{appointment_id}")
-def update_appointment(appointment_id: int, status: str, db: Session = Depends(get_db)):
-    updated = crud.update_appointment(db, appointment_id=appointment_id, status=status)
+@app.put("/patients/{patient_id}", response_model=PatientOut)
+def update_patient(patient_id: int, payload: PatientCreate, db: Session = Depends(get_db)):
+    updated = crud.update_patient(db, patient_id, payload.name, payload.phone)
     if not updated:
-        raise HTTPException(status_code=404, detail="Appointment not found")
+        raise HTTPException(status_code=404, detail="Patient not found")
     return updated
 
-@app.delete("/appointments/{appointment_id}")
-def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
-    deleted = crud.delete_appointment(db, appointment_id=appointment_id)
-    if not deleted:
+@app.delete("/patients/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_patient(patient_id: int, db: Session = Depends(get_db)):
+    ok = crud.delete_patient(db, patient_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    return
+
+# ---------- Appointments ----------
+@app.post("/appointments/", response_model=AppointmentOut, status_code=status.HTTP_201_CREATED)
+def create_appointment(payload: AppointmentCreate, db: Session = Depends(get_db)):
+    appt = crud.create_appointment(db, patient_id=payload.patient_id, date=payload.date)
+    return appt
+
+@app.get("/appointments/", response_model=List[AppointmentOut])
+def list_appointments(db: Session = Depends(get_db)):
+    return crud.get_appointments(db)
+
+@app.get("/appointments/{appointment_id}", response_model=AppointmentOut)
+def get_appointment(appointment_id: int, db: Session = Depends(get_db)):
+    appt = crud.get_appointment(db, appointment_id)
+    if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    return {"detail": "Appointment deleted"}
+    return appt
+
+@app.delete("/appointments/{appointment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
+    ok = crud.delete_appointment(db, appointment_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    return
