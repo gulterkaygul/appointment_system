@@ -1,4 +1,4 @@
-#!/home/tutku/appointment_system/venv/bin/python3
+#!/home/gulter/appointment_system/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
