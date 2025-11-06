@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models import Patient, Appointment
+from .models import Patient, Appointment
 from datetime import datetime
 
 #patient crud
