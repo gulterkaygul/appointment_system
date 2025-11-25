@@ -1,10 +1,17 @@
-# main.py
-from . import schemas
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
+
+from backend.app import crud, models
+from backend.app.database import SessionLocal, engine
+from backend.app.schemas import (
+    PatientCreate,
+    PatientRead,
+    AppointmentCreate,
+    AppointmentRead
+)
 
 # İç modüller
 from backend.app import crud, models, schemas
@@ -38,35 +45,6 @@ def get_db():
         db.close()
 
 
-# ---------- Schemas ----------
-class PatientCreate(BaseModel):
-    name: str
-    phone: str
-
-
-class PatientOut(BaseModel):
-    id: int
-    name: str
-    phone: str
-
-    class Config:
-        from_attributes = True  # orm_mode yerine (Pydantic v2 için)
-
-
-class AppointmentCreate(BaseModel):
-    patient_id: int
-    date: str  # ISO string ("2025-11-05T15:00:00" gibi)
-
-
-class AppointmentOut(BaseModel):
-    id: int
-    patient_id: int
-    date: str
-
-    class Config:
-        from_attributes = True
-
-
 # ---------- Root ----------
 @app.get("/")
 def home():
@@ -74,18 +52,18 @@ def home():
 
 
 # ---------- Patients ----------
-@app.post("/patients/", response_model=PatientOut, status_code=status.HTTP_201_CREATED)
+@app.post("/patients/", response_model=PatientRead, status_code=status.HTTP_201_CREATED)
 def create_patient(payload: PatientCreate, db: Session = Depends(get_db)):
     new_patient = crud.create_patient(db, name=payload.name, phone=payload.phone)
     return new_patient
 
 
-@app.get("/patients/", response_model=List[PatientOut])
+@app.get("/patients/", response_model=List[PatientRead])
 def list_patients(db: Session = Depends(get_db)):
     return crud.get_patients(db)
 
 
-@app.get("/patients/{patient_id}", response_model=PatientOut)
+@app.get("/patients/{patient_id}", response_model=PatientRead)
 def get_patient(patient_id: int, db: Session = Depends(get_db)):
     patient = crud.get_patient(db, patient_id)
     if not patient:
@@ -93,7 +71,7 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)):
     return patient
 
 
-@app.put("/patients/{patient_id}", response_model=PatientOut)
+@app.put("/patients/{patient_id}", response_model=PatientRead)
 def update_patient(patient_id: int, payload: PatientCreate, db: Session = Depends(get_db)):
     updated = crud.update_patient(db, patient_id, payload.name, payload.phone)
     if not updated:
@@ -110,24 +88,19 @@ def delete_patient(patient_id: int, db: Session = Depends(get_db)):
 
 
 # ---------- Appointments ----------
-@app.post("/appointments/", response_model=AppointmentOut, status_code=status.HTTP_201_CREATED)
+@app.post("/appointments/", response_model=AppointmentRead)
 def create_appointment(payload: AppointmentCreate, db: Session = Depends(get_db)):
-    appt = crud.create_appointment(db, patient_id=payload.patient_id, date=payload.date)
+    appt = crud.create_appointment(
+        db=db,
+        patient_id=payload.patient_id,
+        doctor_name=payload.doctor_name,
+        appointment_time=payload.appointment_time
+    )
     return appt
 
-
-@app.get("/appointments/", response_model=List[AppointmentOut])
+@app.get("/appointments/", response_model=List[AppointmentRead])
 def list_appointments(db: Session = Depends(get_db)):
     return crud.get_appointments(db)
-
-
-@app.get("/appointments/{appointment_id}", response_model=AppointmentOut)
-def get_appointment(appointment_id: int, db: Session = Depends(get_db)):
-    appt = crud.get_appointment(db, appointment_id)
-    if not appt:
-        raise HTTPException(status_code=404, detail="Appointment not found")
-    return appt
-
 
 @app.delete("/appointments/{appointment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
