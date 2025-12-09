@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import SessionLocal
-import crud, schemas
+from app.database import SessionLocal
+from app import crud, schemas, models
 
 router = APIRouter(
     prefix="/patients",
     tags=["patients"]
 )
 
-# Dependency: veri tabanı oturumu
+# Database dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -16,21 +16,43 @@ def get_db():
     finally:
         db.close()
 
-# Tüm hastaları listele
+# GET all patients
 @router.get("/", response_model=list[schemas.PatientRead])
 def read_patients(db: Session = Depends(get_db)):
     return crud.get_patients(db)
 
-# Yeni hasta ekle
+# POST create patient
 @router.post("/", response_model=schemas.PatientRead)
-def create_patient(db: Session, patient: schemas.PatientCreate):
+def create_patient(
+    patient: schemas.PatientCreate,
+    db: Session = Depends(get_db)
+):
     new_patient = models.Patient(name=patient.name, phone=patient.phone)
     db.add(new_patient)
     db.commit()
     db.refresh(new_patient)
     return new_patient
 
-# ID ile hasta getir
+#Put patients
+@router.put("/{patient_id}", response_model=schemas.PatientRead)
+def update_patient(
+    patient_id: int,
+    patient_update: schemas.PatientCreate,
+    db: Session = Depends(get_db)
+):
+    updated = crud.update_patient(
+        db,
+        patient_id=patient_id,
+        name=patient_update.name,
+        phone=patient_update.phone
+    )
+
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    return updated
+
+# GET patient by ID
 @router.get("/{patient_id}", response_model=schemas.PatientRead)
 def read_patient(patient_id: int, db: Session = Depends(get_db)):
     db_patient = crud.get_patient(db, patient_id)
@@ -38,7 +60,7 @@ def read_patient(patient_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Patient not found")
     return db_patient
 
-# ID ile hasta sil
+# DELETE patient
 @router.delete("/{patient_id}")
 def delete_patient(patient_id: int, db: Session = Depends(get_db)):
     result = crud.delete_patient(db, patient_id)

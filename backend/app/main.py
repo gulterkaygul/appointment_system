@@ -102,6 +102,29 @@ def create_appointment(payload: AppointmentCreate, db: Session = Depends(get_db)
 def list_appointments(db: Session = Depends(get_db)):
     return crud.get_appointments(db)
 
+@app.get("/appointments/{appointment_id}", response_model=schemas.AppointmentRead)
+def get_appointment_by_id(appointment_id: int, db: Session = Depends(get_db)):
+    appointment = db.query(models.Appointment).filter(models.Appointment.id == appointment_id).first()
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    return appointment
+
+@app.put("/appointments/{appointment_id}", response_model=schemas.AppointmentRead)
+def update_appointment(
+    appointment_id: int,
+    update_data: schemas.AppointmentUpdate,
+    db: Session = Depends(get_db)
+):
+    appointment = db.query(models.Appointment).filter(models.Appointment.id == appointment_id).first()
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    appointment.status = update_data.status
+
+    db.commit()
+    db.refresh(appointment)
+    return appointment
+
 @app.delete("/appointments/{appointment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
     ok = crud.delete_appointment(db, appointment_id)

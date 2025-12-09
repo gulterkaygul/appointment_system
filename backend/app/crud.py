@@ -2,7 +2,10 @@ from sqlalchemy.orm import Session
 from .models import Patient, Appointment
 from datetime import datetime
 
-#patient crud
+# -------------------------
+# PATIENT CRUD
+# -------------------------
+
 def create_patient(db: Session, name: str, phone: str):
     new_patient = Patient(name=name, phone=phone)
     db.add(new_patient)
@@ -13,7 +16,34 @@ def create_patient(db: Session, name: str, phone: str):
 def get_patients(db: Session):
     return db.query(Patient).all()
 
-#appointment crud
+def get_patient(db: Session, patient_id: int):
+    return db.query(Patient).filter(Patient.id == patient_id).first()
+
+def update_patient(db: Session, patient_id: int, name: str, phone: str):
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        return None
+
+    patient.name = name
+    patient.phone = phone
+
+    db.commit()
+    db.refresh(patient)
+    return patient
+
+def delete_patient(db: Session, patient_id: int):
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        return False
+
+    db.delete(patient)
+    db.commit()
+    return True
+
+# -------------------------
+# APPOINTMENT CRUD
+# -------------------------
+
 def create_appointment(db: Session, patient_id: int, doctor_name: str, appointment_time: datetime, status: str = "planned"):
     appointment = Appointment(
         patient_id=patient_id,

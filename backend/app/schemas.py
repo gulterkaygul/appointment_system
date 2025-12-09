@@ -41,3 +41,7 @@ class AppointmentRead(AppointmentBase):
 
     class Config:
         from_attributes = True
+
+class AppointmentUpdate(BaseModel):
+    status: str
+
