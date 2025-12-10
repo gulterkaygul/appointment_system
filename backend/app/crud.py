@@ -14,10 +14,14 @@ def create_patient(db: Session, name: str, phone: str):
     return new_patient
 
 def get_patients(db: Session):
-    return db.query(Patient).all()
+    return db.query(Patient).filter(Patient.is_deleted == False).all()
 
 def get_patient(db: Session, patient_id: int):
-    return db.query(Patient).filter(Patient.id == patient_id).first()
+    return (
+        db.query(Patient)
+        .filter(Patient.id == patient_id, Patient.is_deleted == False)
+        .first()
+    )
 
 def update_patient(db: Session, patient_id: int, name: str, phone: str):
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
@@ -34,11 +38,11 @@ def update_patient(db: Session, patient_id: int, name: str, phone: str):
 def delete_patient(db: Session, patient_id: int):
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
-        return False
+        return None
 
-    db.delete(patient)
+    patient.is_deleted = True
     db.commit()
-    return True
+    return patient
 
 # -------------------------
 # APPOINTMENT CRUD
@@ -57,10 +61,14 @@ def create_appointment(db: Session, patient_id: int, doctor_name: str, appointme
     return appointment
 
 def get_appointments(db: Session):
-    return db.query(Appointment).all()
+    return db.query(Appointment).filter(Appointment.is_deleted == False).all()
 
 def get_appointment_by_id(db: Session, appointment_id: int):
-    return db.query(Appointment).filter(Appointment.id == appointment_id).first()
+    return (
+        db.query(Appointment)
+        .filter(Appointment.id == appointment_id, Appointment.is_deleted == False)
+        .first()
+    )
 
 def update_appointment(db: Session, appointment_id: int, status: str):
     appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
@@ -75,6 +83,8 @@ def delete_appointment(db: Session, appointment_id: int):
     appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
     if not appointment:
         return None
-    db.delete(appointment)
+
+    appointment.is_deleted = True
     db.commit()
     return appointment
+
