@@ -1,13 +1,17 @@
 import os
 import sys
+import importlib
+
+# PYTHON CACHE RESET
+importlib.invalidate_caches()
+
 from alembic import context
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 # --------------------------------------------------
-# PATH FIX — backend/app dosyalarının bulunabilmesi
+# PATH FIX — PROJECT ROOT → BACKEND → APP
 # --------------------------------------------------
-
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 BACKEND_DIR = os.path.join(ROOT_DIR, "backend")
 APP_DIR = os.path.join(BACKEND_DIR, "app")
@@ -16,44 +20,46 @@ sys.path.append(ROOT_DIR)
 sys.path.append(BACKEND_DIR)
 sys.path.append(APP_DIR)
 
-print("🟢 PATHS LOADED:", sys.path)
+# DEBUG
+print("🟢 PATH LOADED:", sys.path)
 
-# --------------------------------------------------
-# ALEMBIC CONFIG
-# --------------------------------------------------
+# Read alembic.ini
 config = context.config
 
+# Logging
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # --------------------------------------------------
-# SQLALCHEMY BASE & MODELS IMPORT
+# IMPORT MODELS & METADATA
 # --------------------------------------------------
-from backend.app.database import Base
-from backend.app.config import DATABASE_URL
+try:
+    from backend.app.database import Base
+    import backend.app.models
+    from backend.app.config import DATABASE_URL
+except Exception as e:
+    print("🔥 MODEL LOAD ERROR:", e)
+    raise
 
-# Modelleri yüklemeden migration çalışmaz
-import backend.app.models
-
+# METADATA → Alembic needs this!
 target_metadata = Base.metadata
+
+# DB connection
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 # --------------------------------------------------
 # OFFLINE MIGRATIONS
 # --------------------------------------------------
 def run_migrations_offline():
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url,
+        url=DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
-        compare_type=True,
         include_schemas=True,
     )
 
     with context.begin_transaction():
         context.run_migrations()
-
 
 # --------------------------------------------------
 # ONLINE MIGRATIONS
@@ -69,16 +75,14 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            compare_type=True,
             include_schemas=True,
         )
 
         with context.begin_transaction():
             context.run_migrations()
 
-
 # --------------------------------------------------
-# RUN MIGRATIONS
+# RUN MODE
 # --------------------------------------------------
 if context.is_offline_mode():
     run_migrations_offline()
