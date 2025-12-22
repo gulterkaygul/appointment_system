@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app import crud, schemas, models
+from app.security import doctor_required
 
 router = APIRouter(
     prefix="/appointments",
@@ -16,8 +17,8 @@ def get_db():
         db.close()
 
 
-# GET all appointments
-@router.get("/", response_model=list[schemas.AppointmentRead])
+# GET all appointments --doctor only
+@router.get("/", response_model=list[schemas.AppointmentRead], dependencies=[Depends(doctor_required)])
 def read_appointments(db: Session = Depends(get_db)):
     return crud.get_appointments(db)
 
@@ -35,8 +36,9 @@ def create_appointment(appointment: schemas.AppointmentCreate, db: Session = Dep
     return new_appointment
 
 
-# GET appointment by ID
-@router.get("/{appointment_id}", response_model=schemas.AppointmentRead)
+# GET appointment by ID --doctor only
+@router.get("/{appointment_id}", response_model=schemas.AppointmentRead, dependencies=[Depends(doctor_required)]
+)
 def read_appointment(appointment_id: int, db: Session = Depends(get_db)):
     db_appointment = crud.get_appointment_by_id(db, appointment_id)
     if db_appointment is None:
@@ -44,8 +46,9 @@ def read_appointment(appointment_id: int, db: Session = Depends(get_db)):
     return db_appointment
 
 
-# PUT update appointment
-@router.put("/{appointment_id}", response_model=schemas.AppointmentRead)
+# PUT update appointment --doctor only
+@router.put("/{appointment_id}", response_model=schemas.AppointmentRead, dependencies=[Depends(doctor_required)]
+)
 def update_appointment(
     appointment_id: int,
     update_data: schemas.AppointmentRead,
@@ -61,8 +64,8 @@ def update_appointment(
     return updated
 
 
-# DELETE appointment
-@router.delete("/{appointment_id}")
+# DELETE appointment --doctor only
+@router.delete("/{appointment_id}", dependencies=[Depends(doctor_required)])
 def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
     result = crud.delete_appointment(db, appointment_id)
     if not result:

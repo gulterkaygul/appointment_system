@@ -45,3 +45,19 @@ class AppointmentRead(AppointmentBase):
 class AppointmentUpdate(BaseModel):
     status: str
 
+
+# ------------------------
+# Login request
+# ------------------------
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+# ------------------------
+# Token response
+# ------------------------
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    role: str
+

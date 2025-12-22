@@ -3,7 +3,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from .config import DATABASE_URL  # .env'den gelen URL
+from sqlalchemy.orm import Session
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+        
 # SQLAlchemy engine oluştur
 engine = create_engine(DATABASE_URL)
 
