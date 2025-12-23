@@ -27,7 +27,7 @@ class PatientRead(PatientBase):
 
 class AppointmentBase(BaseModel):
     patient_id: int
-    doctor_name: str
+    doctor_id: int
     appointment_time: datetime
 
 

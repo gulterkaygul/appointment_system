@@ -52,6 +52,7 @@ class User(Base):
     __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    role = Column(String, default="doctor")  # doctor / admin / ...
+    role = Column(String)  # doctor / admin / ...

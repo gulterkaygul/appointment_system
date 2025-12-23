@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from .models import Patient, Appointment
 from datetime import datetime
+from fastapi import HTTPException, status
 
 # -------------------------
 # PATIENT CRUD
@@ -48,17 +49,40 @@ def delete_patient(db: Session, patient_id: int):
 # APPOINTMENT CRUD
 # -------------------------
 
-def create_appointment(db: Session, patient_id: int, doctor_name: str, appointment_time: datetime, status: str = "planned"):
+def create_appointment(
+    db: Session,
+    patient_id: int,
+    doctor_id: int,
+    appointment_time: datetime,
+    appointment_status: str = "planned"
+):
+
+    # ---- ÇAKIŞMA KONTROLÜ ----
+    conflict = db.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.appointment_time == appointment_time,
+        Appointment.is_deleted == False
+    ).first()
+
+    if conflict:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Appointment conflict: doctor is not available at this time."
+        )
+
+    # ---- RANDEVUYU OLUŞTUR ----
     appointment = Appointment(
         patient_id=patient_id,
-        doctor_name=doctor_name,
+        doctor_id=doctor_id,
         appointment_time=appointment_time,
-        status=status
+        status=appointment_status
     )
+    
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
     return appointment
+
 
 def get_appointments(db: Session):
     return db.query(Appointment).filter(Appointment.is_deleted == False).all()

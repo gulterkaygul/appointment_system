@@ -29,7 +29,7 @@ def create_appointment(appointment: schemas.AppointmentCreate, db: Session = Dep
     new_appointment = crud.create_appointment(
         db=db,
         patient_id=appointment.patient_id,
-        doctor_name=appointment.doctor_name,
+        doctor_id=appointment.doctor_id,
         appointment_time=appointment.appointment_time,
         status="planned"
     )
