@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
 
-from app.routers import auth, patients, appointments
+from app.routers import auth, patients, appointments, public
 from app import crud, models, schemas
 from app.database import SessionLocal, engine
 
@@ -19,6 +19,7 @@ app = FastAPI(
 app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(appointments.router)
+app.include_router(public.router)
 
 # ---------- CORS ----------
 app.add_middleware(

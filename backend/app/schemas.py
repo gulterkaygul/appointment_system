@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 # =====================================
 # PATIENT SCHEMAS
@@ -28,15 +29,22 @@ class PatientRead(PatientBase):
 class AppointmentBase(BaseModel):
     patient_id: int
     doctor_id: int
+    department: str
     appointment_time: datetime
+    complaint: str
 
 
 class AppointmentCreate(AppointmentBase):
     pass
 
 
-class AppointmentRead(AppointmentBase):
+class AppointmentRead(BaseModel):
     id: int
+    patient_id: int
+    doctor_id: Optional[int]
+    department: Optional[str]
+    appointment_time: datetime
+    complaint: Optional[str]
     status: str
 
     class Config:
@@ -61,3 +69,14 @@ class Token(BaseModel):
     token_type: str = "bearer"
     role: str
 
+# =====================================
+# PUBLIC APPOINTMENT (NO LOGIN)
+# =====================================
+
+class PublicAppointmentCreate(BaseModel):
+    patient_name: str
+    patient_phone: str
+    doctor_id: int
+    department: str
+    appointment_time: datetime
+    complaint: str

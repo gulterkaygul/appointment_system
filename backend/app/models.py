@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -36,9 +36,11 @@ class Appointment(Base, AuditMixin):
 
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("public.patients.id"))
-    doctor_id = Column(Integer, ForeignKey("public.users.id"))  # NEW
+    doctor_id = Column(Integer, ForeignKey("public.users.id")) 
     appointment_time = Column(DateTime)
     status = Column(String, default="planned")
+    department = Column(String)
+    complaint = Column(Text)
 
     patient = relationship("Patient", back_populates="appointments")
     doctor = relationship("User")  # NEW
