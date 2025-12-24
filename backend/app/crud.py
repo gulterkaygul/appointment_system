@@ -94,6 +94,16 @@ def get_appointment_by_id(db: Session, appointment_id: int):
         .first()
     )
 
+def get_my_appointments(db: Session, doctor_id: int):
+    return (
+        db.query(Appointment)
+        .filter(
+            Appointment.doctor_id == doctor_id,
+            Appointment.is_deleted == False
+        )
+        .all()
+    )
+
 def update_appointment(db: Session, appointment_id: int, status: str):
     appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
     if not appointment:

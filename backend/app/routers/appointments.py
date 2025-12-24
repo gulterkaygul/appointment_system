@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app import crud, schemas, models
-from app.security import doctor_required
+from app.security import doctor_required, get_current_user
+from app.models import User
 
 router = APIRouter(
     prefix="/appointments",
@@ -22,6 +23,19 @@ def get_db():
 def read_appointments(db: Session = Depends(get_db)):
     return crud.get_appointments(db)
 
+@router.get(
+    "/my",
+    response_model=list[schemas.AppointmentRead],
+    dependencies=[Depends(doctor_required)]
+)
+def read_my_appointments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return crud.get_my_appointments(
+        db=db,
+        doctor_id=current_user.id
+    )
 
 # POST create appointment
 @router.post("/", response_model=schemas.AppointmentRead)
@@ -31,7 +45,6 @@ def create_appointment(appointment: schemas.AppointmentCreate, db: Session = Dep
         patient_id=appointment.patient_id,
         doctor_id=appointment.doctor_id,
         appointment_time=appointment.appointment_time,
-        status="planned"
     )
     return new_appointment
 
