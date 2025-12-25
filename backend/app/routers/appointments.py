@@ -37,12 +37,15 @@ def read_my_appointments(
         doctor_id=current_user.id
     )
 
-# POST create appointment
 @router.post("/", response_model=schemas.AppointmentRead)
-def create_appointment(appointment: schemas.AppointmentCreate, db: Session = Depends(get_db)):
-    new_appointment = crud.create_appointment(
+def create_appointment(
+    appointment: schemas.PublicAppointmentCreate,
+    db: Session = Depends(get_db)
+):
+    new_appointment = crud.create_public_appointment(
         db=db,
-        patient_id=appointment.patient_id,
+        patient_name=appointment.patient_name,
+        patient_phone=appointment.patient_phone,
         doctor_id=appointment.doctor_id,
         appointment_time=appointment.appointment_time,
     )

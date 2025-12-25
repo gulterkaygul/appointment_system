@@ -122,3 +122,41 @@ def delete_appointment(db: Session, appointment_id: int):
     db.commit()
     return appointment
 
+def create_public_appointment(
+    db: Session,
+    patient_name: str,
+    patient_phone: str,
+    doctor_id: int,
+    appointment_time: datetime,
+):
+    # 1️⃣ Hasta oluştur
+    patient = Patient(name=patient_name, phone=patient_phone)
+    db.add(patient)
+    db.commit()
+    db.refresh(patient)
+
+    # 2️⃣ Çakışma kontrolü
+    conflict = db.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.appointment_time == appointment_time,
+        Appointment.is_deleted == False
+    ).first()
+
+    if conflict:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Appointment conflict: doctor is not available at this time."
+        )
+
+    # 3️⃣ Randevu oluştur
+    appointment = Appointment(
+        patient_id=patient.id,
+        doctor_id=doctor_id,
+        appointment_time=appointment_time,
+        status="planned"
+    )
+
+    db.add(appointment)
+    db.commit()
+    db.refresh(appointment)
+    return appointment
