@@ -1,63 +1,37 @@
-import { useState } from "react";
+import { NavLink } from "react-router-dom";
 
 export default function Navbar() {
-  const [openMenu, setOpenMenu] = useState(null);
-
   const menuItems = [
-    {
-      title: "Corporate",
-      content:
-        "Near East University Dental Hospital provides modern and patient-centered oral healthcare services.",
-    },
-    {
-      title: "Clinics",
-      content:
-        "We offer services such as dental examination, orthodontics, root canal treatment and cosmetic dentistry.",
-    },
-    {
-      title: "Doctors",
-      content:
-        "Our experienced academic and clinical staff work with the latest dental technologies.",
-    },
-    {
-      title: "FAQ",
-      content:
-        "You can find answers to frequently asked questions about appointments and treatments.",
-    },
-    {
-      title: "Contact",
-      content:
-        "Phone: +90 XXX XXX XX XX — Email: info@neudent.com",
-    },
+    { title: "Home", path: "/" },
+    { title: "Doctors", path: "/doctors" },
+    { title: "Contact", path: "/contact" },
+    { title: "Corporate", path: "/corporate" }, // Kurumsal sayfa
+    { title: "Partners", path: "/partners" },   // Kurumlar / Sigortalar sayfa
   ];
 
   return (
-    <nav className="w-full bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-6 py-3">
-        <ul className="flex gap-8 text-sm font-medium text-gray-700">
-          {menuItems.map((item, index) => (
+    <nav className="sticky top-0 z-50 w-full bg-gradient-to-r from-[#0A2540] via-[#0A3D66] to-[#0A66C2] shadow-lg">
+      <div className="max-w-7xl mx-auto px-6">
+        <ul className="flex items-center gap-12 h-16 text-sm font-semibold tracking-wide">
+          {menuItems.map((item) => (
             <li key={item.title} className="relative">
-              <button
-                onClick={() =>
-                  setOpenMenu(openMenu === index ? null : index)
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `pb-1 transition-all duration-300 ${
+                    isActive
+                      ? "text-white border-b-2 border-white"
+                      : "text-white/80 hover:text-white hover:border-b-2 hover:border-white/60"
+                  }`
                 }
-                className="hover:text-[#7A1E2C] transition"
               >
                 {item.title}
-              </button>
-
-              {/* DROPDOWN */}
-              {openMenu === index && (
-                <div className="absolute left-0 mt-3 w-72 bg-white shadow-lg border rounded-lg p-4 z-50">
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {item.content}
-                  </p>
-                </div>
-              )}
+              </NavLink>
             </li>
           ))}
         </ul>
       </div>
+      <div className="h-[2px] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
     </nav>
   );
 }
