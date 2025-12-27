@@ -160,3 +160,59 @@ def create_public_appointment(
     db.commit()
     db.refresh(appointment)
     return appointment
+
+from datetime import date
+
+def get_today_appointments(db: Session, doctor_id: int):
+    today = date.today()
+    return (
+        db.query(Appointment)
+        .filter(
+            Appointment.doctor_id == doctor_id,
+            Appointment.is_deleted == False,
+            Appointment.appointment_time >= datetime.combine(today, datetime.min.time()),
+            Appointment.appointment_time <= datetime.combine(today, datetime.max.time()),
+        )
+        .all()
+    )
+
+
+def count_doctor_appointments(db: Session, doctor_id: int):
+    return (
+        db.query(Appointment)
+        .filter(
+            Appointment.doctor_id == doctor_id,
+            Appointment.is_deleted == False
+        )
+        .count()
+    )
+
+
+def count_upcoming_appointments(db: Session, doctor_id: int):
+    return (
+        db.query(Appointment)
+        .filter(
+            Appointment.doctor_id == doctor_id,
+            Appointment.is_deleted == False,
+            Appointment.status == "planned"
+        )
+        .count()
+    )
+
+def update_appointment_status(
+    db: Session,
+    appointment_id: int,
+    new_status: str
+):
+    appointment = db.query(Appointment).filter(
+        Appointment.id == appointment_id,
+        Appointment.is_deleted == False
+    ).first()
+
+    if not appointment:
+        return None
+
+    appointment.status = new_status
+    db.commit()
+    db.refresh(appointment)
+    return appointment

@@ -1,15 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.database import SessionLocal
-from app import crud, schemas, models
-from app.security import doctor_required, get_current_user
+from app import crud, schemas
+from app.security import doctor_required
 from app.models import User
+
 
 router = APIRouter(
     prefix="/appointments",
     tags=["appointments"]
 )
 
+# -------------------------
+# DB Dependency
+# -------------------------
 def get_db():
     db = SessionLocal()
     try:
@@ -18,57 +23,63 @@ def get_db():
         db.close()
 
 
-# GET all appointments --doctor only
-@router.get("/", response_model=list[schemas.AppointmentRead], dependencies=[Depends(doctor_required)])
-def read_appointments(db: Session = Depends(get_db)):
+# =========================================================
+# DOCTOR PANEL
+# =========================================================
+
+# 🔐 GET all appointments (doctor only)
+@router.get(
+    "/",
+    response_model=list[schemas.AppointmentRead],
+)
+def read_appointments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(doctor_required),
+):
     return crud.get_appointments(db)
 
+
+# 🔐 GET only logged-in doctor's appointments
 @router.get(
     "/my",
     response_model=list[schemas.AppointmentRead],
-    dependencies=[Depends(doctor_required)]
 )
 def read_my_appointments(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(doctor_required),
 ):
     return crud.get_my_appointments(
         db=db,
         doctor_id=current_user.id
     )
 
-@router.post("/", response_model=schemas.AppointmentRead)
-def create_appointment(
-    appointment: schemas.PublicAppointmentCreate,
-    db: Session = Depends(get_db)
-):
-    new_appointment = crud.create_public_appointment(
-        db=db,
-        patient_name=appointment.patient_name,
-        patient_phone=appointment.patient_phone,
-        doctor_id=appointment.doctor_id,
-        appointment_time=appointment.appointment_time,
-    )
-    return new_appointment
 
-
-# GET appointment by ID --doctor only
-@router.get("/{appointment_id}", response_model=schemas.AppointmentRead, dependencies=[Depends(doctor_required)]
+# 🔐 GET appointment by ID (doctor only)
+@router.get(
+    "/{appointment_id}",
+    response_model=schemas.AppointmentRead,
 )
-def read_appointment(appointment_id: int, db: Session = Depends(get_db)):
-    db_appointment = crud.get_appointment_by_id(db, appointment_id)
-    if db_appointment is None:
+def read_appointment(
+    appointment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(doctor_required),
+):
+    appointment = crud.get_appointment_by_id(db, appointment_id)
+    if appointment is None:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    return db_appointment
+    return appointment
 
 
-# PUT update appointment --doctor only
-@router.put("/{appointment_id}", response_model=schemas.AppointmentRead, dependencies=[Depends(doctor_required)]
+# 🔐 UPDATE appointment status (doctor only)
+@router.put(
+    "/{appointment_id}",
+    response_model=schemas.AppointmentRead,
 )
 def update_appointment(
     appointment_id: int,
-    update_data: schemas.AppointmentRead,
-    db: Session = Depends(get_db)
+    update_data: schemas.AppointmentUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(doctor_required),
 ):
     updated = crud.update_appointment(
         db=db,
@@ -80,10 +91,41 @@ def update_appointment(
     return updated
 
 
-# DELETE appointment --doctor only
-@router.delete("/{appointment_id}", dependencies=[Depends(doctor_required)])
-def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
+# 🔐 DELETE appointment (soft delete – doctor only)
+@router.delete(
+    "/{appointment_id}",
+)
+def delete_appointment(
+    appointment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(doctor_required),
+):
     result = crud.delete_appointment(db, appointment_id)
     if not result:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return {"detail": "Appointment deleted successfully"}
+
+
+# =========================================================
+# PUBLIC – NO LOGIN REQUIRED
+# =========================================================
+
+# 🌍 CREATE appointment (public – patient side)
+@router.post(
+    "/",
+    response_model=schemas.AppointmentRead,
+)
+def create_public_appointment(
+    appointment: schemas.PublicAppointmentCreate,
+    db: Session = Depends(get_db),
+):
+    new_appointment = crud.create_public_appointment(
+        db=db,
+        patient_name=appointment.patient_name,
+        patient_phone=appointment.patient_phone,
+        doctor_id=appointment.doctor_id,
+        department=appointment.department,
+        complaint=appointment.complaint,
+        appointment_time=appointment.appointment_time,
+    )
+    return new_appointment
