@@ -56,22 +56,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0B2A4A]">
+
       {/* ================= HERO ================= */}
       <section className="relative w-full h-[70vh] flex overflow-hidden">
-
-        {/* SOL FOTOĞRAF */}
         <div className="w-2/3 h-full relative">
           <img
             src="https://www.egitimajansi.com/images/uploads//3bb2ed00fde5327a95d662702e0b466f.jpg"
             alt="Dental Hospital"
             className="h-full w-full object-cover"
           />
-
-          {/* KOYU GEÇİŞ */}
           <div className="absolute top-0 right-0 h-full w-48 bg-gradient-to-l from-[#0B2A4A] to-transparent" />
         </div>
 
-        {/* SAĞ PANEL */}
         <div className="w-1/3 flex flex-col justify-center px-10 bg-gradient-to-b from-[#0F3A5F] to-[#0B2A4A] text-[#EAF4FF]">
           <img
             src="https://upload.wikimedia.org/wikipedia/tr/1/10/Yak%C4%B1n_Do%C4%9Fu_%C3%9Cniversitesi.svg"
@@ -98,18 +94,72 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= CONTENT ================= */}
-      <section className="max-w-7xl mx-auto px-6 py-20 bg-[#0B2A4A]">
-        <h3 className="text-2xl font-semibold text-[#EAF4FF] mb-4">
+      {/* ================= WHY CHOOSE US ================= */}
+      <section className="max-w-7xl mx-auto px-6 py-24">
+        <h3 className="text-3xl font-bold text-[#EAF4FF] mb-6">
           Why Choose Us?
         </h3>
-        <p className="text-[#CFE6F7] max-w-3xl">
-          We provide high-quality dental services with experienced professionals,
-          advanced medical equipment and a strong focus on patient satisfaction.
+
+        <p className="text-[#CFE6F7] max-w-4xl mb-12 text-lg">
+          Our Dental Hospital combines academic excellence, modern infrastructure,
+          advanced medical technology and a patient-centered approach to provide
+          world-class oral and dental healthcare services.
         </p>
+
+        {/* GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+          {[
+            {
+              title: "Advanced Medical Technology",
+              text: "Equipped with state-of-the-art diagnostic and treatment technologies ensuring precise and effective dental care.",
+              img: "https://neu.edu.tr/wp-content/uploads/2022/01/11/Yakin-Dogu-Universitesi-Dis-Hastanesi-scaled.jpg",
+            },
+            {
+              title: "Expert Academic Staff",
+              text: "Our experienced dentists and academic professionals deliver high-quality treatments based on scientific excellence.",
+              img: "https://photos.wikimapia.org/p/00/08/10/12/94_big.jpg",
+            },
+            {
+              title: "Patient-Centered Approach",
+              text: "We prioritize patient comfort, safety and satisfaction at every stage of diagnosis and treatment.",
+              img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyfJdxldDBxCwoEPotqMyAAQ8Uv4BgGrNpxA&s",
+            },
+            {
+              title: "Modern & Comfortable Facilities",
+              text: "Designed with modern architecture to provide a comfortable, hygienic and welcoming healthcare environment.",
+              img: "https://neu.edu.tr/wp-content/uploads/2018/09/19/fotosuz-820-silinecek.jpg",
+            },
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="group relative h-80 rounded-2xl overflow-hidden shadow-xl"
+            >
+              {/* FOTO */}
+              <img
+                src={item.img}
+                alt={item.title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+
+              {/* OVERLAY */}
+              <div className="absolute inset-0 bg-[#0B2A4A]/80 group-hover:bg-[#0B2A4A]/60 transition" />
+
+              {/* TEXT */}
+              <div className="relative z-10 h-full flex flex-col justify-end p-8">
+                <h4 className="text-xl font-semibold text-white mb-2">
+                  {item.title}
+                </h4>
+                <p className="text-[#D6E9F8] text-sm leading-relaxed">
+                  {item.text}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
-      {/* ================= MODAL ================= */}
+      {/* ================= MODAL (UNCHANGED) ================= */}
       {open && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white w-[380px] rounded-2xl p-6 shadow-2xl border-t-4 border-[#0A66C2]">
