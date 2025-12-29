@@ -1,16 +1,23 @@
 import axios from "axios";
 
-const API = axios.create({
+const api = axios.create({
   baseURL: "http://127.0.0.1:8000",
 });
 
-// Token otomatik ekleme
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("doctor_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// 🔐 TOKEN INTERCEPTOR (ŞART)
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
 
-export default API;
+    console.log("AXIOS TOKEN:", token); // 👈 DEBUG
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+export default api;

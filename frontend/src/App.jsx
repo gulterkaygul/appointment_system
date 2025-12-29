@@ -6,25 +6,28 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import DoctorLayout from "./layouts/DoctorLayout";
 import DoctorRoute from "./routes/DoctorRoute";
+import AdminLayout from "./layouts/AdminLayout";
 
-// Public pages 
+// Public pages
 import Home from "./pages/Home";
 import Doctors from "./pages/Doctors";
 import Contact from "./pages/Contact";
 import Corporate from "./pages/Corporate";
 import Partners from "./pages/Partners";
 
+// Login (TEK DOSYA – admin & doctor)
+import Login from "./pages/Login";
+
 // Doctor pages
-import DoctorLogin from "./pages/doctor/Login";
 import Dashboard from "./pages/doctor/Dashboard";
 import MyAppointments from "./pages/doctor/MyAppointments";
 import TodayAppointments from "./pages/doctor/TodayAppointments";
 
-// 🔐 ADMIN
-import Login from "./pages/Login"; // admin login
+// Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Patients from "./pages/admin/Patients";
 import Appointments from "./pages/admin/Appointments";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
@@ -42,38 +45,24 @@ export default function App() {
         </Route>
 
         {/* 🔐 ADMIN LOGIN */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/admin/login" element={<Login />} />
 
-        {/* 🔐 ADMIN PANEL */}
+        {/* 🔐 ADMIN PANEL (NESTED + LAYOUT) */}
         <Route
           path="/admin"
           element={
             <ProtectedRoute role="admin">
-              <AdminDashboard />
+              <AdminLayout />
             </ProtectedRoute>
           }
-        />
-
-        <Route
-          path="/admin/patients"
-          element={
-            <ProtectedRoute role="admin">
-              <Patients />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/appointments"
-          element={
-            <ProtectedRoute role="admin">
-              <Appointments />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="patients" element={<Patients />} />
+          <Route path="appointments" element={<Appointments />} />
+        </Route>
 
         {/* 👨‍⚕️ DOCTOR LOGIN */}
-        <Route path="/doctor/login" element={<DoctorLogin />} />
+        <Route path="/doctor/login" element={<Login />} />
 
         {/* 👨‍⚕️ DOCTOR PANEL */}
         <Route

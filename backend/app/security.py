@@ -92,10 +92,11 @@ def doctor_required(
 #admin zorunlu dependency
 def admin_required(
     current_user: User = Depends(get_current_user),
-) -> User:
+):
+
     if current_user.role != "admin":
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admins can access this resource.",
+            status_code=403,
+            detail=f"Admin access required. Your role: {current_user.role}",
         )
     return current_user

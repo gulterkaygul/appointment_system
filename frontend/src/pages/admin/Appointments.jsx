@@ -11,9 +11,11 @@ export default function Appointments() {
 
   const fetchAppointments = async () => {
     try {
-      const res = await api.get("/appointments");
+      // 🔧 SLASH EKLENDİ
+      const res = await api.get("/appointments/");
       setAppointments(res.data);
-    } catch {
+    } catch (error) {
+      console.error(error);
       alert("Failed to load appointments");
     } finally {
       setLoading(false);
@@ -24,9 +26,11 @@ export default function Appointments() {
     if (!window.confirm("Delete this appointment?")) return;
 
     try {
-      await api.delete(`/appointments/${id}`);
+      // 🔧 SLASH EKLENDİ
+      await api.delete(`/appointments/${id}/`);
       setAppointments(appointments.filter(a => a.id !== id));
-    } catch {
+    } catch (error) {
+      console.error(error);
       alert("Delete failed");
     }
   };
@@ -76,7 +80,7 @@ export default function Appointments() {
                 </td>
 
                 <td className="p-4">
-                  Dr. {a.doctor_name || "Doctor #" + a.doctor_id}
+                  Dr. {a.doctor_name || `Doctor #${a.doctor_id}`}
                 </td>
 
                 <td className="p-4">{a.department}</td>
