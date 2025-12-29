@@ -115,8 +115,6 @@ def create_public_appointment(
         patient_name=appointment.patient_name,
         patient_phone=appointment.patient_phone,
         doctor_id=appointment.doctor_id,
-        department=appointment.department,
-        complaint=appointment.complaint,
         appointment_time=appointment.appointment_time,
     )
     return new_appointment
