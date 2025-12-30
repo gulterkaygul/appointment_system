@@ -7,6 +7,9 @@ import PublicLayout from "./layouts/PublicLayout";
 import DoctorLayout from "./layouts/DoctorLayout";
 import DoctorRoute from "./routes/DoctorRoute";
 import AdminLayout from "./layouts/AdminLayout";
+import AddAppointment from "./pages/admin/AddAppointment";
+import ProtectedRoute from "./routes/ProtectedRoute";
+
 
 // Public pages
 import Home from "./pages/Home";
@@ -28,7 +31,6 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import Patients from "./pages/admin/Patients";
 import Appointments from "./pages/admin/Appointments";
 
-import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
@@ -59,6 +61,7 @@ export default function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="patients" element={<Patients />} />
           <Route path="appointments" element={<Appointments />} />
+          <Route path="appointments/new" element={<AddAppointment />} />
         </Route>
 
         {/* 👨‍⚕️ DOCTOR LOGIN */}

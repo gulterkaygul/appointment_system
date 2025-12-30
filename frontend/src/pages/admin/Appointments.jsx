@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 export default function Appointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAppointments();
@@ -11,7 +13,6 @@ export default function Appointments() {
 
   const fetchAppointments = async () => {
     try {
-      // 🔧 SLASH EKLENDİ
       const res = await api.get("/appointments/");
       setAppointments(res.data);
     } catch (error) {
@@ -26,9 +27,8 @@ export default function Appointments() {
     if (!window.confirm("Delete this appointment?")) return;
 
     try {
-      // 🔧 SLASH EKLENDİ
       await api.delete(`/appointments/${id}/`);
-      setAppointments(appointments.filter(a => a.id !== id));
+      setAppointments((prev) => prev.filter((a) => a.id !== id));
     } catch (error) {
       console.error(error);
       alert("Delete failed");
@@ -51,10 +51,21 @@ export default function Appointments() {
 
   return (
     <div className="min-h-screen bg-[#0B2A4A] text-[#EAF4FF] p-10">
-      <h1 className="text-3xl font-bold mb-8">
-        Appointment Management
-      </h1>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">
+          Appointment Management
+        </h1>
 
+        <button
+          onClick={() => navigate("/admin/appointments/new")}
+          className="bg-green-600 hover:bg-green-700 px-5 py-2 rounded-xl text-white font-semibold transition"
+        >
+          + Add Appointment
+        </button>
+      </div>
+
+      {/* Table */}
       <div className="overflow-x-auto rounded-2xl shadow-lg">
         <table className="w-full bg-[#0F3A5F] rounded-2xl overflow-hidden">
           <thead className="bg-[#134B7A] text-left">
@@ -74,29 +85,45 @@ export default function Appointments() {
                 key={a.id}
                 className="border-b border-white/10 hover:bg-[#134B7A]/40 transition"
               >
+                {/* Patient */}
                 <td className="p-4">
-                  <div className="font-semibold">{a.patient_name}</div>
-                  <div className="text-sm text-[#CFE6F7]">{a.patient_phone}</div>
+                  <div className="font-semibold">
+                    {a.patient?.name || "Unknown"}
+                  </div>
+                  <div className="text-sm text-[#CFE6F7]">
+                    {a.patient?.phone || "-"}
+                  </div>
                 </td>
 
+                {/* Doctor */}
                 <td className="p-4">
-                  Dr. {a.doctor_name || `Doctor #${a.doctor_id}`}
+                  {a.doctor?.full_name
+                    ? `Dr. ${a.doctor.full_name}`
+                    : `Doctor #${a.doctor_id}`}
                 </td>
 
-                <td className="p-4">{a.department}</td>
+                {/* Department */}
+                <td className="p-4">
+                  {a.department || "-"}
+                </td>
 
+                {/* Date */}
                 <td className="p-4">
                   {new Date(a.appointment_time).toLocaleString()}
                 </td>
 
+                {/* Status */}
                 <td className="p-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm ${statusColor(a.status)}`}
+                    className={`px-3 py-1 rounded-full text-sm ${statusColor(
+                      a.status
+                    )}`}
                   >
-                    {a.status || "pending"}
+                    {a.status}
                   </span>
                 </td>
 
+                {/* Actions */}
                 <td className="p-4 text-center">
                   <button
                     onClick={() => deleteAppointment(a.id)}
@@ -107,6 +134,17 @@ export default function Appointments() {
                 </td>
               </tr>
             ))}
+
+            {appointments.length === 0 && (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="text-center p-6 text-white/70"
+                >
+                  No appointments found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

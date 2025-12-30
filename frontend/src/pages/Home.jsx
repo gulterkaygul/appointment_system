@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Footer from "../components/Footer"; // Footer importu
 
 export default function Home() {
@@ -13,6 +13,19 @@ export default function Home() {
   const [time, setTime] = useState("");
   const [complaint, setComplaint] = useState("");
   const [kvkk, setKvkk] = useState(false);
+
+  // Modal animasyonu kontrolü
+  const [showModal, setShowModal] = useState(false);
+
+  const openModal = () => {
+    setOpen(true);
+    setTimeout(() => setShowModal(true), 50); // küçük gecikme ile animasyon
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setTimeout(() => setOpen(false), 300); // animasyon sonrası kapat
+  };
 
   const handleConfirm = async () => {
     if (!name || !phone || !doctor || !department || !date || !time || !kvkk) {
@@ -41,7 +54,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Request failed");
 
       alert("Appointment successfully created ✅");
-      setOpen(false);
+      closeModal();
       setName("");
       setPhone("");
       setDoctor("");
@@ -87,8 +100,8 @@ export default function Home() {
             </p>
 
             <button
-              onClick={() => setOpen(true)}
-              className="w-fit px-10 py-4 bg-[#0A66C2] rounded-xl text-lg hover:bg-[#084C91] transition"
+              onClick={openModal}
+              className="w-fit px-10 py-4 bg-[#0A66C2] rounded-xl text-lg hover:bg-[#084C91] transition-transform transform hover:scale-105"
             >
               Book Appointment
             </button>
@@ -151,55 +164,130 @@ export default function Home() {
 
         {/* ================= MODAL ================= */}
         {open && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <div className="bg-white w-[380px] rounded-2xl p-6 shadow-2xl border-t-4 border-[#0A66C2]">
-              <h2 className="text-xl font-semibold text-center mb-4">
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 transition-opacity duration-300">
+            <div
+              className={`bg-white w-[380px] rounded-2xl p-6 shadow-2xl border-t-4 border-[#0A66C2] transform transition-transform duration-300 ${
+                showModal ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
+              }`}
+            >
+              <h2 className="text-xl font-semibold text-center mb-4 text-black">
                 Appointment Form
               </h2>
 
               <div className="flex flex-col gap-3">
-                <input className="border rounded-lg p-2" placeholder="Full Name *" value={name} onChange={(e) => setName(e.target.value)} />
-                <input className="border rounded-lg p-2" placeholder="Phone Number *" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                <select className="border rounded-lg p-2" value={doctor} onChange={(e) => setDoctor(e.target.value)}>
+                <input
+                  className="border rounded-lg p-2 text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  placeholder="Full Name *"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <input
+                  className="border rounded-lg p-2 text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  placeholder="Phone Number *"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+                <select
+                  className="border rounded-lg p-2 text-black focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  value={doctor}
+                  onChange={(e) => setDoctor(e.target.value)}
+                >
                   <option value="">Select Doctor *</option>
                   <option value="1">Dr. Canan Demir</option>
                   <option value="2">Dr. Ahmet Yıldız</option>
                   <option value="3">Dr. Elif Demir</option>
                   <option value="4">Dr. Mehmet Kaya</option>
                 </select>
-                <select className="border rounded-lg p-2" value={department} onChange={(e) => setDepartment(e.target.value)}>
+                <select
+                  className="border rounded-lg p-2 text-black focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                >
                   <option value="">Select Department *</option>
                   <option>Dental Examination</option>
                   <option>Tooth Filling</option>
                   <option>Root Canal Treatment</option>
                   <option>Orthodontics</option>
                 </select>
-                <input className="border rounded-lg p-2" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                <select className="border rounded-lg p-2" value={time} onChange={(e) => setTime(e.target.value)}>
+                <input
+                  className="border rounded-lg p-2 text-black focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+                <select
+                  className="border rounded-lg p-2 text-black focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                >
                   <option value="">Select Time *</option>
                   {["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"].map(t => (
                     <option key={t}>{t}</option>
                   ))}
                 </select>
-                <textarea className="border rounded-lg p-2" rows={3} placeholder="Describe your complaint (optional)" value={complaint} onChange={(e) => setComplaint(e.target.value)} />
-                <label className="flex items-center gap-2 text-sm">
+                <textarea
+                  className="border rounded-lg p-2 text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  rows={3}
+                  placeholder="Describe your complaint (optional)"
+                  value={complaint}
+                  onChange={(e) => setComplaint(e.target.value)}
+                />
+                <label className="flex items-center gap-2 text-sm text-black">
                   <input type="checkbox" checked={kvkk} onChange={(e) => setKvkk(e.target.checked)} />
                   I approve the consent text
                 </label>
-                <button onClick={handleConfirm} className="bg-[#0A66C2] text-white py-2 rounded-lg hover:bg-[#084C91] transition">
+                <button
+                  onClick={handleConfirm}
+                  className="bg-[#0A66C2] text-white py-2 rounded-lg hover:bg-[#084C91] transition-transform transform hover:scale-105"
+                >
                   Confirm Appointment
                 </button>
-                <button onClick={() => setOpen(false)} className="text-gray-500 text-sm">
+                <button
+                  onClick={closeModal}
+                  className="text-gray-500 text-sm hover:underline"
+                >
                   Cancel
                 </button>
               </div>
             </div>
           </div>
         )}
-      </div>
 
-      {/* ================= FOOTER ================= */}
-      <Footer />
+        {/* ================= CONTACT SECTION ================= */}
+        <section className="bg-[#0B2A4A] text-[#EAF4FF] px-6 py-16">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div>
+              <h3 className="text-3xl font-bold mb-6">Contact Us</h3>
+              <p className="mb-2"><span className="font-semibold">Phone:</span></p>
+              <p>+90 392 680 20 30</p>
+              <p>+90 392 680 20 25</p>
+
+              <p className="mt-4 mb-2"><span className="font-semibold">Email:</span></p>
+              <p>neudental@neu.edu.tr</p>
+
+              <p className="mt-4 mb-2"><span className="font-semibold">Address:</span></p>
+              <p>Near East University</p>
+              <p>Yakın Doğu Bulvarı, PK:922022</p>
+              <p>Lefkoşa/KKTC</p>
+              <p>Mersin 10 – Turkey</p>
+            </div>
+
+            <div>
+              <p className="mb-2"><span className="font-semibold">Emergency / Hospital:</span></p>
+              <p>Emergency: 153</p>
+              <p>Hospital: +90 392 444 0 535</p>
+
+              <p className="mt-4 mb-2"><span className="font-semibold">Working Hours:</span></p>
+              <p>Monday - Friday: 09:00 - 17:30</p>
+              <p>Saturday: 09:00 - 13:30</p>
+              <p>Sunday: Closed</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ================= FOOTER ================= */}
+        <Footer />
+      </div>
     </>
   );
 }

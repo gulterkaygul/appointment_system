@@ -10,23 +10,29 @@ export default function Login() {
   const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const data = await login(email, password);
+  try {
+    const data = await login(email, password);
 
-      // 🔐 kaydet
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("role", data.role);
+    // 🔐 TOKEN + USER (DOĞRU FORMAT)
+    localStorage.setItem("token", data.access_token);
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        email,
+        role: data.role,
+      })
+    );
 
-      // 🔁 yönlendir
-      if (data.role === "admin") navigate("/admin");
-      else if (data.role === "doctor") navigate("/doctor");
-      else navigate("/");
-    } catch {
-      setError("Email or password incorrect");
-    }
-  };
+    // 🔁 DOĞRU YÖNLENDİRME
+    if (data.role === "admin") navigate("/admin/dashboard");
+    else if (data.role === "doctor") navigate("/doctor/dashboard");
+    else navigate("/");
+  } catch (err) {
+    setError("Email or password incorrect");
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0B2A4A] text-white">

@@ -26,6 +26,14 @@ class PatientRead(PatientBase):
 # APPOINTMENT SCHEMAS
 # =====================================
 
+class PatientMini(BaseModel):
+    id: int
+    name: str
+    phone: str
+
+    class Config:
+        from_attributes = True
+
 class AppointmentBase(BaseModel):
     patient_id: int
     doctor_id: int
@@ -40,15 +48,18 @@ class AppointmentCreate(AppointmentBase):
 
 class AppointmentRead(BaseModel):
     id: int
-    patient_id: int
+    appointment_time: datetime
+    status: str
+
+    patient: PatientMini   
+
     doctor_id: Optional[int]
     department: Optional[str]
-    appointment_time: datetime
     complaint: Optional[str]
-    status: str
 
     class Config:
         from_attributes = True
+
 
 class AppointmentUpdate(BaseModel):
     status: str
