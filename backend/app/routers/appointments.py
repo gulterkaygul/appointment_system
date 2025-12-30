@@ -11,9 +11,6 @@ router = APIRouter(
     tags=["appointments"]
 )
 
-# -------------------------
-# DB Dependency
-# -------------------------
 def get_db():
     db = SessionLocal()
     try:
@@ -22,7 +19,24 @@ def get_db():
         db.close()
 
 # =========================================================
-# ADMIN PANEL – FULL CONTROL
+# DOCTOR PANEL – OWN APPOINTMENTS
+# =========================================================
+
+@router.get(
+    "/my",
+    response_model=list[schemas.AppointmentRead],
+)
+def read_my_appointments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(doctor_required),
+):
+    return crud.get_my_appointments(
+        db=db,
+        doctor_id=current_user.id
+    )
+
+# =========================================================
+# ADMIN PANEL
 # =========================================================
 
 @router.get(
@@ -36,6 +50,25 @@ def read_appointments(
     return crud.get_appointments(db)
 
 
+@router.post(
+    "/admin",
+    response_model=schemas.AppointmentRead,
+)
+def create_appointment_admin(
+    appointment: schemas.AppointmentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_required),
+):
+    return crud.create_appointment(
+        db=db,
+        patient_id=appointment.patient_id,
+        doctor_id=appointment.doctor_id,
+        appointment_time=appointment.appointment_time,
+        department=appointment.department,
+        complaint=appointment.complaint,
+    )
+
+
 @router.get(
     "/{appointment_id}",
     response_model=schemas.AppointmentRead,
@@ -46,7 +79,7 @@ def read_appointment(
     current_user: User = Depends(admin_required),
 ):
     appointment = crud.get_appointment_by_id(db, appointment_id)
-    if appointment is None:
+    if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return appointment
 
@@ -66,7 +99,7 @@ def update_appointment(
         appointment_id=appointment_id,
         status=update_data.status
     )
-    if updated is None:
+    if not updated:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return updated
 
@@ -79,50 +112,13 @@ def delete_appointment(
     db: Session = Depends(get_db),
     current_user: User = Depends(admin_required),
 ):
-    result = crud.delete_appointment(db, appointment_id)
-    if not result:
+    deleted = crud.delete_appointment(db, appointment_id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return {"detail": "Appointment deleted successfully"}
 
-
-# ✅ ADMIN CREATE (ID ile – ADMIN PANEL)
-@router.post(
-    "/admin",
-    response_model=schemas.AppointmentRead,
-)
-def create_appointment_admin(
-    appointment: schemas.AppointmentCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(admin_required),
-):
-    return crud.create_appointment(
-        db=db,
-        patient_id=appointment.patient_id,
-        doctor_id=appointment.doctor_id,
-        appointment_time=appointment.appointment_time,
-        department=appointment.department,
-        complaint=appointment.complaint,
-    )
-
 # =========================================================
-# DOCTOR PANEL – OWN APPOINTMENTS ONLY
-# =========================================================
-
-@router.get(
-    "/my",
-    response_model=list[schemas.AppointmentRead],
-)
-def read_my_appointments(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(doctor_required),
-):
-    return crud.get_my_appointments(
-        db=db,
-        doctor_id=current_user.id
-    )
-
-# =========================================================
-# PUBLIC – NO LOGIN REQUIRED
+# PUBLIC
 # =========================================================
 
 @router.post(
@@ -138,7 +134,7 @@ def create_public_appointment(
         patient_name=appointment.patient_name,
         patient_phone=appointment.patient_phone,
         doctor_id=appointment.doctor_id,
-        department=appointment.department,
         appointment_time=appointment.appointment_time,
+        department=appointment.department,
         complaint=appointment.complaint,
     )
