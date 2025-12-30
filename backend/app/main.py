@@ -1,12 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from typing import List
-from pydantic import BaseModel
 
 from app.routers import auth, patients, appointments, public, doctor, admin, users
-from app import crud, models, schemas
-from app.database import SessionLocal, engine
+from app.database import SessionLocal
 
 app = FastAPI(
     title="Dentist Appointment System",
@@ -15,7 +11,19 @@ app = FastAPI(
     swagger_ui_parameters={"defaultModelsExpandDepth": -1}
 )
 
-# include routers
+# ---------- CORS (MUTLAKA ROUTER'LARDAN ÖNCE) ----------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ---------- ROUTERS ----------
 app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(appointments.router)
@@ -23,15 +31,6 @@ app.include_router(public.router)
 app.include_router(doctor.router)
 app.include_router(admin.router)
 app.include_router(users.router)
-
-# ---------- CORS ----------
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # ---------- DB Dependency ----------
 def get_db():
