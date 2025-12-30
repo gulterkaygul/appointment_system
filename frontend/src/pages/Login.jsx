@@ -12,6 +12,9 @@ export default function Login() {
   const handleLogin = async (e) => {
   e.preventDefault();
 
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+
   try {
     const data = await login(email, password);
 

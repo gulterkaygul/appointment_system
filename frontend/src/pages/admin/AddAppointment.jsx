@@ -17,7 +17,7 @@ export default function AddAppointment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔄 Hastalar & Doktorlar yüklenir
+  // 🔄 Load patients & doctors
   useEffect(() => {
     fetchPatients();
     fetchDoctors();
@@ -37,29 +37,34 @@ export default function AddAppointment() {
       const res = await api.get("/users/?role=doctor");
       setDoctors(res.data);
     } catch {
-      setDoctors([]); // backend yoksa boş geçeriz
+      setDoctors([]);
     }
   };
 
-  // 💾 Kaydet
+  // 💾 SAVE (ADMIN ENDPOINT)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      await api.post("/appointments/", {
+      await api.post("/appointments/admin", {
         patient_id: Number(patientId),
         doctor_id: Number(doctorId),
-        department,
-        appointment_time: appointmentTime,
-        complaint,
+        department: department.trim(),
+        appointment_time: new Date(appointmentTime).toISOString(),
+        complaint: complaint || "",
       });
 
       alert("Appointment created successfully 🎉");
       navigate("/admin/appointments");
     } catch (err) {
-      setError("Failed to create appointment");
+      console.error("BACKEND ERROR:", err.response?.data);
+      setError(
+        err.response?.data
+          ? JSON.stringify(err.response.data, null, 2)
+          : "Failed to create appointment"
+      );
     } finally {
       setLoading(false);
     }
@@ -67,18 +72,16 @@ export default function AddAppointment() {
 
   return (
     <div className="min-h-screen bg-[#0B2A4A] text-white p-10">
-      <h1 className="text-3xl font-bold mb-8">
-        Add Appointment
-      </h1>
+      <h1 className="text-3xl font-bold mb-8">Add Appointment</h1>
 
       <form
         onSubmit={handleSubmit}
         className="bg-[#0F3A5F] p-8 rounded-2xl max-w-2xl shadow-xl"
       >
         {error && (
-          <p className="bg-red-500/20 text-red-200 p-3 rounded mb-6">
+          <pre className="bg-red-500/20 text-red-200 p-4 rounded mb-6 text-sm overflow-x-auto">
             {error}
-          </p>
+          </pre>
         )}
 
         {/* Patient */}
@@ -108,7 +111,7 @@ export default function AddAppointment() {
           <option value="">Select doctor</option>
           {doctors.map((d) => (
             <option key={d.id} value={d.id}>
-              Dr. {d.full_name}
+              {d.full_name}
             </option>
           ))}
         </select>

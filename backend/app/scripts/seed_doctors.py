@@ -1,6 +1,6 @@
 from app.database import SessionLocal
 from app.models import User
-from app.security import hash_password   # 👈 BURASI ÖNEMLİ
+from app.security import hash_password  
 
 db = SessionLocal()
 

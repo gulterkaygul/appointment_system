@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app import crud, schemas
 from app.models import User
-from app.security import admin_required, doctor_required   # ✅ TEK KAYNAK
+from app.security import admin_required, doctor_required
 
 router = APIRouter(
     prefix="/appointments",
@@ -35,6 +35,7 @@ def read_appointments(
 ):
     return crud.get_appointments(db)
 
+
 @router.get(
     "/{appointment_id}",
     response_model=schemas.AppointmentRead,
@@ -48,6 +49,7 @@ def read_appointment(
     if appointment is None:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return appointment
+
 
 @router.put(
     "/{appointment_id}",
@@ -68,6 +70,7 @@ def update_appointment(
         raise HTTPException(status_code=404, detail="Appointment not found")
     return updated
 
+
 @router.delete(
     "/{appointment_id}",
 )
@@ -80,6 +83,26 @@ def delete_appointment(
     if not result:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return {"detail": "Appointment deleted successfully"}
+
+
+# ✅ ADMIN CREATE (ID ile – ADMIN PANEL)
+@router.post(
+    "/admin",
+    response_model=schemas.AppointmentRead,
+)
+def create_appointment_admin(
+    appointment: schemas.AppointmentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_required),
+):
+    return crud.create_appointment(
+        db=db,
+        patient_id=appointment.patient_id,
+        doctor_id=appointment.doctor_id,
+        appointment_time=appointment.appointment_time,
+        department=appointment.department,
+        complaint=appointment.complaint,
+    )
 
 # =========================================================
 # DOCTOR PANEL – OWN APPOINTMENTS ONLY
@@ -110,11 +133,12 @@ def create_public_appointment(
     appointment: schemas.PublicAppointmentCreate,
     db: Session = Depends(get_db),
 ):
-    new_appointment = crud.create_public_appointment(
+    return crud.create_public_appointment(
         db=db,
         patient_name=appointment.patient_name,
         patient_phone=appointment.patient_phone,
         doctor_id=appointment.doctor_id,
+        department=appointment.department,
         appointment_time=appointment.appointment_time,
+        complaint=appointment.complaint,
     )
-    return new_appointment
