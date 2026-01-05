@@ -99,8 +99,7 @@ POST /auth/login
   "email": "ahmet.kaya@clinic.com",
   "password": "doctor123"
 }
-
----
+```
 
 # Dentist Appointment System – Frontend
 
