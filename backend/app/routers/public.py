@@ -11,9 +11,9 @@ router = APIRouter(
     tags=["public"]
 )
 
-# -------------------------
+
 # DB dependency
-# -------------------------
+
 def get_db():
     db = SessionLocal()
     try:
@@ -22,22 +22,22 @@ def get_db():
         db.close()
 
 
-# -------------------------
+
 # PUBLIC APPOINTMENT CREATE
 # (Login gerekmez)
-# -------------------------
+
 @router.post("/appointments")
 def create_public_appointment(
     data: PublicAppointmentCreate,
     db: Session = Depends(get_db)
 ):
-    # 1️⃣ Hasta var mı?
+    #Hasta var mı?
     patient = db.query(Patient).filter(
         Patient.phone == data.patient_phone,
         Patient.is_deleted == False
     ).first()
 
-    # 2️⃣ Yoksa otomatik oluştur
+    #Yoksa otomatik oluştur
     if not patient:
         patient = Patient(
             name=data.patient_name,
@@ -47,7 +47,7 @@ def create_public_appointment(
         db.commit()
         db.refresh(patient)
 
-    # 3️⃣ Aynı doktor + saat çakışma kontrolü
+    #Aynı doktor + saat çakışma kontrolü
     conflict = db.query(Appointment).filter(
         Appointment.doctor_id == data.doctor_id,
         Appointment.appointment_time == data.appointment_time,
@@ -60,7 +60,7 @@ def create_public_appointment(
             detail="Doctor is not available at this time."
         )
 
-    # 4️⃣ Randevu oluştur
+    #Randevu oluştur
     appointment = Appointment(
         patient_id=patient.id,
         doctor_id=data.doctor_id,

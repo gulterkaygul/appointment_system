@@ -10,16 +10,16 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from .models import User
 
-# --------------------------------
+
 # Config
-# --------------------------------
+
 SECRET_KEY = "super-secret-key-change-this"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# --------------------------------
+
 # Password hashing
-# --------------------------------
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
@@ -28,14 +28,14 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-# --------------------------------
+
 # Bearer Token (Swagger + curl uyumlu)
-# --------------------------------
+
 security = HTTPBearer()
 
-# --------------------------------
+
 # JWT oluşturma
-# --------------------------------
+
 def create_access_token(
     data: dict,
     expires_delta: Optional[timedelta] = None
@@ -47,9 +47,9 @@ def create_access_token(
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# --------------------------------
+
 # Token'dan current_user alma
-# --------------------------------
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db),
@@ -76,9 +76,9 @@ def get_current_user(
 
     return user
 
-# --------------------------------
+
 # Doktor zorunlu dependency
-# --------------------------------
+
 def doctor_required(
     current_user: User = Depends(get_current_user),
 ) -> User:

@@ -18,9 +18,7 @@ def get_db():
     finally:
         db.close()
 
-# =========================================================
 # DOCTOR PANEL – OWN APPOINTMENTS
-# =========================================================
 
 @router.get(
     "/my",
@@ -35,9 +33,7 @@ def read_my_appointments(
         doctor_id=current_user.id
     )
 
-# =========================================================
 # ADMIN PANEL
-# =========================================================
 
 @router.get(
     "/",
@@ -117,9 +113,8 @@ def delete_appointment(
         raise HTTPException(status_code=404, detail="Appointment not found")
     return {"detail": "Appointment deleted successfully"}
 
-# =========================================================
+
 # PUBLIC
-# =========================================================
 
 @router.post(
     "/",

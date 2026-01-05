@@ -1,16 +1,75 @@
-# React + Vite
+# Dentist Appointment System – Backend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This repository contains the backend implementation of the Dentist Appointment System.
+The backend handles authentication, role-based authorization, appointment management,
+and database operations.
 
-Currently, two official plugins are available:
+The system is developed using FastAPI, PostgreSQL, SQLAlchemy, Alembic, and JWT.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Technologies Used
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- FastAPI – RESTful API framework
+- PostgreSQL – Relational database
+- SQLAlchemy ORM – Database modeling
+- Alembic – Database migrations
+- JWT (JSON Web Token) – Authentication & authorization
+- bcrypt / passlib – Secure password hashing
+- Uvicorn – ASGI server
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Project Structure
+
+backend/
+├── app/
+│   ├── main.py              # FastAPI entry point
+│   ├── database.py          # Database configuration
+│   ├── models.py            # SQLAlchemy models
+│   ├── schemas.py           # Pydantic schemas
+│   ├── security.py          # JWT & role-based security
+│   ├── crud.py              # Database operations
+│   └── routers/
+│       ├── auth.py          # Authentication endpoints
+│       ├── patients.py      # Patient management
+│       └── appointments.py  # Appointment management
+├── alembic/
+│   └── versions/            # Migration files
+├── alembic.ini
+└── README.md
+
+---
+
+## Authentication & Authorization
+
+The system uses JWT-based authentication.
+
+### Roles
+- Doctor
+  - Can log in
+  - Can view own appointments
+  - Can view all appointments
+  - Can update and delete appointments
+  - Can access doctor dashboard endpoints
+
+Passwords are stored as hashed values.
+JWT tokens include:
+- sub → user email
+- role → user role
+
+---
+
+## Doctor Login
+
+### Endpoint
+POST /auth/login
+
+### Request Body
+```json
+{
+  "email": "ahmet.kaya@clinic.com",
+  "password": "doctor123"
+}
+
+

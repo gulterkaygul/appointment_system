@@ -10,9 +10,8 @@ router = APIRouter(
     tags=["patients"]
 )
 
-# -------------------------
 # DB Dependency
-# -------------------------
+
 def get_db():
     db = SessionLocal()
     try:
@@ -20,9 +19,9 @@ def get_db():
     finally:
         db.close()
 
-# =========================
+
 # GET all patients (ADMIN)
-# =========================
+
 @router.get("/", response_model=list[schemas.PatientRead])
 def read_patients(
     db: Session = Depends(get_db),
@@ -30,9 +29,9 @@ def read_patients(
 ):
     return crud.get_patients(db)
 
-# =========================
+
 # POST create patient (ADMIN)
-# =========================
+
 @router.post("/", response_model=schemas.PatientRead)
 def create_patient(
     patient: schemas.PatientCreate,
@@ -48,9 +47,9 @@ def create_patient(
     db.refresh(new_patient)
     return new_patient
 
-# =========================
+
 # PUT update patient (ADMIN)
-# =========================
+
 @router.put("/{patient_id}", response_model=schemas.PatientRead)
 def update_patient(
     patient_id: int,
@@ -68,9 +67,9 @@ def update_patient(
         raise HTTPException(status_code=404, detail="Patient not found")
     return updated
 
-# =========================
+
 # GET patient by ID (ADMIN)
-# =========================
+
 @router.get("/{patient_id}", response_model=schemas.PatientRead)
 def read_patient(
     patient_id: int,
@@ -82,9 +81,9 @@ def read_patient(
         raise HTTPException(status_code=404, detail="Patient not found")
     return patient
 
-# =========================
+
 # DELETE patient (ADMIN)
-# =========================
+
 @router.delete("/{patient_id}")
 def delete_patient(
     patient_id: int,

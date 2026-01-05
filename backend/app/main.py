@@ -11,7 +11,7 @@ app = FastAPI(
     swagger_ui_parameters={"defaultModelsExpandDepth": -1}
 )
 
-# ---------- CORS (MUTLAKA ROUTER'LARDAN ÖNCE) ----------
+#CORS (routersdan once)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -23,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------- ROUTERS ----------
+#ROUTERS
 app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(appointments.router)
@@ -32,7 +32,7 @@ app.include_router(doctor.router)
 app.include_router(admin.router)
 app.include_router(users.router)
 
-# ---------- DB Dependency ----------
+#DB Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -40,7 +40,7 @@ def get_db():
     finally:
         db.close()
 
-# ---------- Root ----------
+#Root
 @app.get("/")
 def home():
     return {"message": "Welcome to the Dentist Appointment System!"}

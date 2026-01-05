@@ -47,7 +47,7 @@ for d in doctors:
     user = User(
         full_name=d["full_name"],
         email=d["email"],
-        password_hash=hash_password(d["password"]),  # 👈 UYUMLU
+        password_hash=hash_password(d["password"]), 
         role="doctor",
     )
     db.add(user)

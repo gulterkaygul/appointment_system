@@ -17,7 +17,7 @@ def get_db():
     finally:
         db.close()
 
-# 🔹 Dashboard summary
+#Dashboard summary
 @router.get("/dashboard")
 def doctor_dashboard(
     db: Session = Depends(get_db),
@@ -28,7 +28,7 @@ def doctor_dashboard(
         "upcoming_appointments": crud.count_upcoming_appointments(db, current_user.id),
     }
 
-# 🔹 My appointments
+#My appointments
 @router.get("/appointments", response_model=list[schemas.AppointmentRead])
 def my_appointments(
     db: Session = Depends(get_db),
@@ -36,7 +36,7 @@ def my_appointments(
 ):
     return crud.get_my_appointments(db, current_user.id)
 
-# 🔹 Today appointments
+#Today appointments
 @router.get("/appointments/today", response_model=list[schemas.AppointmentRead])
 def today_appointments(
     db: Session = Depends(get_db),

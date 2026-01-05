@@ -5,9 +5,7 @@ from fastapi import HTTPException, status
 from .models import Patient, Appointment
 
 
-# =========================================================
 # PATIENT CRUD
-# =========================================================
 
 def create_patient(db: Session, name: str, phone: str):
     patient = Patient(name=name, phone=phone)
@@ -50,10 +48,7 @@ def delete_patient(db: Session, patient_id: int):
     db.commit()
     return patient
 
-
-# =========================================================
 # APPOINTMENT CRUD
-# =========================================================
 
 def _check_conflict(
     db: Session,
@@ -77,9 +72,7 @@ def _check_conflict(
         )
 
 
-# -------------------------
 # ADMIN – CREATE APPOINTMENT
-# -------------------------
 
 def create_appointment(
     db: Session,
@@ -107,9 +100,7 @@ def create_appointment(
     return appointment
 
 
-# -------------------------
 # PUBLIC – CREATE APPOINTMENT
-# -------------------------
 
 def create_public_appointment(
     db: Session,
@@ -120,16 +111,16 @@ def create_public_appointment(
     department: str | None = None,
     complaint: str | None = None,
 ):
-    # 1️⃣ Hasta oluştur
+    #Hasta oluştur
     patient = Patient(name=patient_name, phone=patient_phone)
     db.add(patient)
     db.commit()
     db.refresh(patient)
 
-    # 2️⃣ Çakışma kontrolü
+    #Çakışma kontrolü
     _check_conflict(db, doctor_id, appointment_time)
 
-    # 3️⃣ Randevu oluştur
+    #Randevu oluştur
     appointment = Appointment(
         patient_id=patient.id,
         doctor_id=doctor_id,
@@ -145,9 +136,7 @@ def create_public_appointment(
     return appointment
 
 
-# -------------------------
 # READ
-# -------------------------
 
 def get_appointments(db: Session):
     return db.query(Appointment).filter(Appointment.is_deleted == False).all()
@@ -172,9 +161,7 @@ def get_my_appointments(db: Session, doctor_id: int):
     )
 
 
-# -------------------------
 # UPDATE
-# -------------------------
 
 def update_appointment(db: Session, appointment_id: int, status: str):
     appointment = (
@@ -211,9 +198,7 @@ def update_appointment_status(
     return appointment
 
 
-# -------------------------
 # DELETE (SOFT)
-# -------------------------
 
 def delete_appointment(db: Session, appointment_id: int):
     appointment = (
@@ -229,9 +214,7 @@ def delete_appointment(db: Session, appointment_id: int):
     return appointment
 
 
-# -------------------------
 # DOCTOR DASHBOARD HELPERS
-# -------------------------
 
 def get_today_appointments(db: Session, doctor_id: int):
     today = date.today()

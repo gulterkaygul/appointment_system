@@ -4,18 +4,17 @@ from datetime import datetime
 from .database import Base
 
 
-# ------------------------
+
 # AuditMixin (Soft Delete)
-# ------------------------
+
 class AuditMixin:
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_deleted = Column(Boolean, default=False)
 
 
-# ------------------------
 # Patient Model
-# ------------------------
+
 class Patient(Base, AuditMixin):
     __tablename__ = "patients"
     __table_args__ = {"schema": "public"}
@@ -27,9 +26,8 @@ class Patient(Base, AuditMixin):
     appointments = relationship("Appointment", back_populates="patient")
 
 
-# ------------------------
 # Appointment Model
-# ------------------------
+
 class Appointment(Base, AuditMixin):
     __tablename__ = "appointments"
     __table_args__ = {"schema": "public"}
@@ -46,9 +44,9 @@ class Appointment(Base, AuditMixin):
     doctor = relationship("User")  # NEW
     
 
-# ------------------------
-# User Model  (NEW)
-# ------------------------
+
+# User Model  
+
 class User(Base):
     __tablename__ = "users"
     __table_args__ = {"schema": "public"}
