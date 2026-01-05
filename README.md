@@ -46,21 +46,49 @@ backend/
 The system uses JWT-based authentication.
 
 ### Roles
-- Doctor
-  - Can log in
-  - Can view own appointments
-  - Can view all appointments
-  - Can update and delete appointments
-  - Can access doctor dashboard endpoints
+
+#### Admin
+- Can log in
+- Can view all users (doctors and patients)
+- Can create, update, and delete doctors
+- Can view all appointments
+- Can delete any appointment
+- Can access all administrative endpoints
+
+---
+
+#### Doctor
+- Can log in
+- Can view own appointments
+- Can view all appointments
+- Can update and delete appointments
+- Can access doctor dashboard endpoints
+
+---
 
 Passwords are stored as hashed values.
+
 JWT tokens include:
 - sub → user email
 - role → user role
 
 ---
 
+## Admin Login
+
+### Endpoint
+POST /auth/login
+
+### Request Body
+```json
+{
+  "email": "admin@system.com",
+  "password": "admin123"
+}
+
 ## Doctor Login
+
+Doctors authenticate using their email and password to access doctor-only endpoints.
 
 ### Endpoint
 POST /auth/login
@@ -71,5 +99,3 @@ POST /auth/login
   "email": "ahmet.kaya@clinic.com",
   "password": "doctor123"
 }
-
-
