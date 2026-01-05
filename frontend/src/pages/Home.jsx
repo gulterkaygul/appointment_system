@@ -53,7 +53,7 @@ export default function Home() {
 
       if (!res.ok) throw new Error("Request failed");
 
-      alert("Appointment successfully created ✅");
+      alert("Appointment successfully created ");
       closeModal();
 
       setName("");
@@ -65,7 +65,7 @@ export default function Home() {
       setComplaint("");
       setKvkk(false);
     } catch {
-      alert("Something went wrong ❌");
+      alert("Something went wrong ");
     }
   };
 

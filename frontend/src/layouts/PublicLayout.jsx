@@ -5,7 +5,7 @@ export default function PublicLayout() {
   return (
     <>
       <Navbar />
-      <Outlet />   {/* 👈 BU YOKSA SAYFA BEYAZ */}
+      <Outlet />   {/*  BU YOKSA SAYFA BEYAZ */}
     </>
   );
 }

@@ -23,7 +23,7 @@ function AppointmentModal({ onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1️⃣ zorunlu alanlar
+    //  zorunlu alanlar
     if (
       !form.name ||
       !form.phone ||
@@ -37,7 +37,7 @@ function AppointmentModal({ onClose }) {
       return;
     }
 
-    // 2️⃣ BACKEND FORMAT
+    //  BACKEND FORMAT
     const payload = {
       patient_id: 1, // şimdilik sabit
       doctor_id: form.doctor === "Dr. A" ? 1 : 2,
@@ -62,7 +62,7 @@ function AppointmentModal({ onClose }) {
       alert("✅ Appointment successfully booked!");
       onClose();
     } catch (error) {
-      alert("❌ Error while booking appointment");
+      alert(" Error while booking appointment");
       console.error(error);
     }
   };

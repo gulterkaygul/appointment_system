@@ -42,8 +42,8 @@ export default function Dashboard() {
 
       {/* ---- QUICK LINKS ---- */}
       <div style={{ marginTop: "30px" }}>
-        <Link to="/doctor/appointments">📋 My Appointments</Link> <br />
-        <Link to="/doctor/today">📅 Today’s Appointments</Link>
+        <Link to="/doctor/appointments"> My Appointments</Link> <br />
+        <Link to="/doctor/today"> Today’s Appointments</Link>
       </div>
     </div>
   );

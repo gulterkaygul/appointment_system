@@ -14,6 +14,6 @@ export default function ProtectedRoute({ role, children }) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // 🔥 EN KRİTİK KISIM (nested route için)
+  //  EN KRİTİK KISIM (nested route için)
   return children ? children : <Outlet />;
 }

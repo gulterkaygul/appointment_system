@@ -12,7 +12,7 @@ export default function MyAppointments() {
 
   const fetchMyAppointments = async () => {
     try {
-      const res = await api.get("/appointments/my"); // 🔥 DOĞRU ENDPOINT
+      const res = await api.get("/appointments/my"); //  DOĞRU ENDPOINT
       setAppointments(res.data);
     } catch (err) {
       console.error(err);

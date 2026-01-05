@@ -31,7 +31,7 @@ export default function TodayAppointments() {
       <ul>
         {appointments.map((a) => (
           <li key={a.id}>
-            ⏰ {new Date(a.appointment_time).toLocaleTimeString()} — Patient #{a.patient_id}
+                {new Date(a.appointment_time).toLocaleTimeString()} — Patient #{a.patient_id}
           </li>
         ))}
       </ul>

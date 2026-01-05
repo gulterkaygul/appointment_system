@@ -18,7 +18,7 @@ export default function AdminDashboard() {
                      hover:bg-[#134B7A] transition-all duration-300"
         >
           <h2 className="text-2xl font-semibold mb-3">
-            👤 Patient Management
+               Patient Management
           </h2>
           <p className="text-[#CFE6F7]">
             Add, update or delete patients
@@ -36,7 +36,7 @@ export default function AdminDashboard() {
                      hover:bg-[#134B7A] transition-all duration-300"
         >
           <h2 className="text-2xl font-semibold mb-3">
-            📅 Appointment Management
+               Appointment Management
           </h2>
           <p className="text-[#CFE6F7]">
             View and manage all doctors’ appointments

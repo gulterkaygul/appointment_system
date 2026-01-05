@@ -17,7 +17,7 @@ export default function AddAppointment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔄 Load patients & doctors
+  //  Load patients & doctors
   useEffect(() => {
     fetchPatients();
     fetchDoctors();
@@ -41,7 +41,7 @@ export default function AddAppointment() {
     }
   };
 
-  // 💾 SAVE (ADMIN ENDPOINT)
+  //  SAVE (ADMIN ENDPOINT)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -56,7 +56,7 @@ export default function AddAppointment() {
         complaint: complaint || "",
       });
 
-      alert("Appointment created successfully 🎉");
+      alert("Appointment created successfully ");
       navigate("/admin/appointments");
     } catch (err) {
       console.error("BACKEND ERROR:", err.response?.data);

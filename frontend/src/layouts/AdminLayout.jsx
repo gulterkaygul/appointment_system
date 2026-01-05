@@ -4,11 +4,11 @@ export default function AdminLayout() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // 🔐 Tüm auth verilerini temizle
+    //  Tüm auth verilerini temizle
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
-    // 🔁 Login sayfasına gönder
+    //  Login sayfasına gönder
     navigate("/admin/login");
   };
 
@@ -26,7 +26,7 @@ export default function AdminLayout() {
           </nav>
         </div>
 
-        {/* 🔴 LOGOUT */}
+        {/*  LOGOUT */}
         <button
           onClick={handleLogout}
           className="mt-10 bg-red-600 hover:bg-red-700 py-2 rounded-xl font-semibold transition"

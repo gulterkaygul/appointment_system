@@ -10,7 +10,7 @@ export default function Patients() {
 
   const token = localStorage.getItem("token");
 
-  // 🔗 DB BAĞLANTISI – AYNI KALDI
+  //  DB BAĞLANTISI 
   const fetchPatients = () => {
     fetch("http://127.0.0.1:8000/patients", {
       headers: {
@@ -25,7 +25,7 @@ export default function Patients() {
     fetchPatients();
   }, []);
 
-  // ➕ ADD / ✏️ UPDATE
+  //  ADD /  UPDATE
   const savePatient = () => {
     const method = editing ? "PUT" : "POST";
     const url = editing
@@ -44,11 +44,11 @@ export default function Patients() {
       setEditing(null);
       setName("");
       setPhone("");
-      fetchPatients(); // 🔄 DB'den tekrar çek
+      fetchPatients(); //  DB'den tekrar çek
     });
   };
 
-  // 🗑️ DELETE
+  //  DELETE
   const deletePatient = (id) => {
     if (!window.confirm("Delete this patient?")) return;
 

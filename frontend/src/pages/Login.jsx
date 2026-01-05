@@ -18,7 +18,7 @@ export default function Login() {
   try {
     const data = await login(email, password);
 
-    // 🔐 TOKEN + USER (DOĞRU FORMAT)
+    //  TOKEN + USER (DOĞRU FORMAT)
     localStorage.setItem("token", data.access_token);
     localStorage.setItem(
       "user",
@@ -28,7 +28,7 @@ export default function Login() {
       })
     );
 
-    // 🔁 DOĞRU YÖNLENDİRME
+    //  DOĞRU YÖNLENDİRME
     if (data.role === "admin") navigate("/admin/dashboard");
     else if (data.role === "doctor") navigate("/doctor/dashboard");
     else navigate("/");

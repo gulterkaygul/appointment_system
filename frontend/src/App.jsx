@@ -46,10 +46,10 @@ export default function App() {
           <Route path="/partners" element={<Partners />} />
         </Route>
 
-        {/* 🔐 ADMIN LOGIN */}
+        {/*  ADMIN LOGIN */}
         <Route path="/admin/login" element={<Login />} />
 
-        {/* 🔐 ADMIN PANEL (NESTED + LAYOUT) */}
+        {/*  ADMIN PANEL (NESTED + LAYOUT) */}
         <Route
           path="/admin"
           element={
@@ -64,10 +64,10 @@ export default function App() {
           <Route path="appointments/new" element={<AddAppointment />} />
         </Route>
 
-        {/* 👨‍⚕️ DOCTOR LOGIN */}
+        {/*  DOCTOR LOGIN */}
         <Route path="/doctor/login" element={<Login />} />
 
-        {/* 👨‍⚕️ DOCTOR PANEL */}
+        {/*  DOCTOR PANEL */}
         <Route
           path="/doctor"
           element={
