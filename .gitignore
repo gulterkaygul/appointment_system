@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Python
 __pycache__/
 *.pyc
@@ -14,29 +13,19 @@ env/
 # Node.js
 node_modules/
 dist/
+dist-ssr
 build/
 
 # Alembic cache
 alembic/versions/__pycache__/
 alembic/__pycache__/
-# Ek güvenlik (bazı sistemlerde oluşabiliyor)
+
+# Ek güvenlik
 lib/
 lib64/
 
-# Pytest ve log dosyaları
-*.log
-.coverage
-htmlcov/
-
-# IDE / Editör dosyaları
-.vscode/
-.idea/
-
-# Mac & Linux sistem dosyaları
-.DS_Store
-=======
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -44,19 +33,26 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Test / coverage
+.coverage
+htmlcov/
+
+# Local env files
+.env
 *.local
 
-# Editor directories and files
-.vscode/*
+# IDE / Editör
+.vscode/
 !.vscode/extensions.json
-.idea
+.idea/
+
+# Sistem dosyaları
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
->>>>>>> 99ae77e (Add Footer component and update Home.jsx)
+
+#backend yedegi (backup)
+*.dump
