@@ -13,6 +13,7 @@ from .models import User
 
 # Config
 
+RESET_SECRET_KEY = "reset-secret-key"
 SECRET_KEY = "super-secret-key-change-this"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
@@ -100,3 +101,17 @@ def admin_required(
             detail=f"Admin access required. Your role: {current_user.role}",
         )
     return current_user
+
+#sifremi unuttum icin token
+
+def create_reset_token(email: str):
+    expire = datetime.utcnow() + timedelta(minutes=30)
+    to_encode = {"sub": email, "exp": expire}
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def verify_reset_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub")
+    except JWTError:
+        return None

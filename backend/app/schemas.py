@@ -86,3 +86,12 @@ class PublicAppointmentCreate(BaseModel):
     department: str
     appointment_time: datetime
     complaint: str
+
+#forgot password
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str

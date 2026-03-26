@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.utils.email import send_reset_email
 from app.database import get_db
 from app.models import User
 from app import schemas
-from app.security import verify_password, create_access_token
+from app.security import hash_password, verify_password, create_access_token, create_reset_token, verify_reset_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -42,3 +43,30 @@ def login(
         "token_type": "bearer",
         "role": user.role,
     }
+
+@router.post("/forgot-password")
+def forgot_password(data: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    token = create_reset_token(user.email)
+
+    send_reset_email(user.email, token)
+
+    return {"message": "Password reset email sent"}
+
+@router.post("/reset-password")
+def reset_password(data: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
+    email = verify_reset_token(data.token)
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    user = db.query(User).filter(User.email == email).first()
+
+    user.password_hash = hash_password(data.new_password)
+    db.commit()
+
+    return {"message": "Password successfully reset"}
