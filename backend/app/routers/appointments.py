@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app import crud, schemas
-from app.models import User
-from app.security import admin_required, doctor_required
+from app.models import User, Appointment, Patient
+from app.security import admin_required, doctor_required, get_current_user
 
 router = APIRouter(
     prefix="/appointments",
@@ -66,7 +66,7 @@ def create_appointment_admin(
 
 
 @router.get(
-    "/{appointment_id}",
+    "/{appointment_id:int}",
     response_model=schemas.AppointmentRead,
 )
 def read_appointment(
@@ -99,6 +99,38 @@ def update_appointment(
         raise HTTPException(status_code=404, detail="Appointment not found")
     return updated
 
+@router.put("{appointment_id}/status")
+def update_status(
+    appointment_id: int,
+    status: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(doctor_required),
+):
+    appointment = db.query(Appointment).filter(
+        Appointment.id == appointment_id
+    ).first()
+
+    if not appointment:
+        raise HTTPException(404, "Appointment not found")
+
+    # sadece kendi randevusunu değiştirebilir
+    if appointment.doctor_id != current_user.id:
+        raise HTTPException(403, "Not authorized")
+
+    # geçerli statusler
+    valid_statuses = ["planned", "approved", "rejected", "completed"]
+
+    if status not in valid_statuses:
+        raise HTTPException(400, "Invalid status")
+
+    # completed ise bir daha değişmesin (bonus)
+    if appointment.status == "completed":
+        raise HTTPException(400, "Completed appointment cannot be changed")
+
+    appointment.status = status
+    db.commit()
+
+    return {"message": f"Status updated to {status}"}
 
 @router.delete(
     "/{appointment_id}",
@@ -128,8 +160,36 @@ def create_public_appointment(
         db=db,
         patient_name=appointment.patient_name,
         patient_phone=appointment.patient_phone,
+        email=appointment.email,
         doctor_id=appointment.doctor_id,
         appointment_time=appointment.appointment_time,
         department=appointment.department,
         complaint=appointment.complaint,
     )
+
+#patients panel
+
+@router.get("/my-patient/") #sondaki / path cakismasini engeller
+def get_my_patient_appointments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # sadece patient role erişsin
+    if current_user.role != "patient":
+        raise HTTPException(status_code=403, detail="Only patients allowed")
+
+    # patient kaydını bul
+    patient = db.query(Patient).filter(
+        Patient.user_id == current_user.id
+    ).first()
+
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    # randevuları getir
+    appointments = db.query(Appointment).filter(
+        Appointment.patient_id == patient.id,
+        Appointment.is_deleted == False
+    ).all()
+
+    return appointments

@@ -82,6 +82,7 @@ class Token(BaseModel):
 class PublicAppointmentCreate(BaseModel):
     patient_name: str
     patient_phone: str
+    email:str
     doctor_id: int
     department: str
     appointment_time: datetime

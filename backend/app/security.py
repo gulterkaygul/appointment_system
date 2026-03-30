@@ -102,6 +102,16 @@ def admin_required(
         )
     return current_user
 
+def patient_required(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if current_user.role != "patient":
+        raise HTTPException(
+            status_code=403,
+            detail="Only patients can access this resource.",
+        )
+    return current_user
+
 #sifremi unuttum icin token
 
 def create_reset_token(email: str):

@@ -5,7 +5,9 @@ from fastapi import HTTPException, status
 from .models import Patient, Appointment
 
 
+# =========================
 # PATIENT CRUD
+# =========================
 
 def create_patient(db: Session, name: str, phone: str):
     patient = Patient(name=name, phone=phone)
@@ -20,23 +22,10 @@ def get_patients(db: Session):
 
 
 def get_patient(db: Session, patient_id: int):
-    return (
-        db.query(Patient)
-        .filter(Patient.id == patient_id, Patient.is_deleted == False)
-        .first()
-    )
-
-
-def update_patient(db: Session, patient_id: int, name: str, phone: str):
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        return None
-
-    patient.name = name
-    patient.phone = phone
-    db.commit()
-    db.refresh(patient)
-    return patient
+    return db.query(Patient).filter(
+        Patient.id == patient_id,
+        Patient.is_deleted == False
+    ).first()
 
 
 def delete_patient(db: Session, patient_id: int):
@@ -48,31 +37,43 @@ def delete_patient(db: Session, patient_id: int):
     db.commit()
     return patient
 
-# APPOINTMENT CRUD
 
-def _check_conflict(
-    db: Session,
-    doctor_id: int,
-    appointment_time: datetime
-):
-    conflict = (
-        db.query(Appointment)
-        .filter(
-            Appointment.doctor_id == doctor_id,
-            Appointment.appointment_time == appointment_time,
-            Appointment.is_deleted == False
-        )
-        .first()
-    )
+# =========================
+# APPOINTMENT HELPERS
+# =========================
+
+VALID_STATUSES = ["planned", "approved", "rejected", "completed"]
+
+
+def _check_conflict(db: Session, doctor_id: int, appointment_time: datetime):
+    conflict = db.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.appointment_time == appointment_time,
+        Appointment.is_deleted == False
+    ).first()
 
     if conflict:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Appointment conflict: doctor is not available at this time."
+            status_code=400,
+            detail="Doctor is not available at this time."
         )
 
 
-# ADMIN – CREATE APPOINTMENT
+def _get_appointment_or_404(db: Session, appointment_id: int):
+    appointment = db.query(Appointment).filter(
+        Appointment.id == appointment_id,
+        Appointment.is_deleted == False
+    ).first()
+
+    if not appointment:
+        raise HTTPException(404, "Appointment not found")
+
+    return appointment
+
+
+# =========================
+# CREATE
+# =========================
 
 def create_appointment(
     db: Session,
@@ -82,7 +83,6 @@ def create_appointment(
     department: str,
     complaint: str,
 ):
-    # Çakışma kontrolü
     _check_conflict(db, doctor_id, appointment_time)
 
     appointment = Appointment(
@@ -100,8 +100,6 @@ def create_appointment(
     return appointment
 
 
-# PUBLIC – CREATE APPOINTMENT
-
 def create_public_appointment(
     db: Session,
     patient_name: str,
@@ -111,16 +109,13 @@ def create_public_appointment(
     department: str | None = None,
     complaint: str | None = None,
 ):
-    #Hasta oluştur
-    patient = Patient(name=patient_name, phone=patient_phone)
-    db.add(patient)
-    db.commit()
-    db.refresh(patient)
+    # patient oluştur
+    patient = create_patient(db, patient_name, patient_phone)
 
-    #Çakışma kontrolü
+    # çakışma kontrolü
     _check_conflict(db, doctor_id, appointment_time)
 
-    #Randevu oluştur
+    # randevu oluştur
     appointment = Appointment(
         patient_id=patient.id,
         doctor_id=doctor_id,
@@ -136,118 +131,95 @@ def create_public_appointment(
     return appointment
 
 
+# =========================
 # READ
+# =========================
 
 def get_appointments(db: Session):
     return db.query(Appointment).filter(Appointment.is_deleted == False).all()
 
 
 def get_appointment_by_id(db: Session, appointment_id: int):
-    return (
-        db.query(Appointment)
-        .filter(Appointment.id == appointment_id, Appointment.is_deleted == False)
-        .first()
-    )
+    return _get_appointment_or_404(db, appointment_id)
 
 
 def get_my_appointments(db: Session, doctor_id: int):
-    return (
-        db.query(Appointment)
-        .filter(
-            Appointment.doctor_id == doctor_id,
-            Appointment.is_deleted == False
-        )
-        .all()
-    )
+    return db.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.is_deleted == False
+    ).all()
 
 
-# UPDATE
-
-def update_appointment(db: Session, appointment_id: int, status: str):
-    appointment = (
-        db.query(Appointment)
-        .filter(Appointment.id == appointment_id, Appointment.is_deleted == False)
-        .first()
-    )
-    if not appointment:
-        return None
-
-    appointment.status = status
-    db.commit()
-    db.refresh(appointment)
-    return appointment
-
+# =========================
+# UPDATE (STATUS)
+# =========================
 
 def update_appointment_status(
     db: Session,
     appointment_id: int,
-    new_status: str
+    new_status: str,
+    current_user_id: int = None,
+    is_doctor: bool = False
 ):
-    appointment = (
-        db.query(Appointment)
-        .filter(Appointment.id == appointment_id, Appointment.is_deleted == False)
-        .first()
-    )
+    appointment = _get_appointment_or_404(db, appointment_id)
 
-    if not appointment:
-        return None
+    # doktor sadece kendi randevusunu değiştirebilir
+    if is_doctor and appointment.doctor_id != current_user_id:
+        raise HTTPException(403, "Not authorized")
+
+    # status kontrol
+    if new_status not in VALID_STATUSES:
+        raise HTTPException(400, "Invalid status")
+
+    # completed kilidi
+    if appointment.status == "completed":
+        raise HTTPException(400, "Completed appointment cannot be changed")
 
     appointment.status = new_status
     db.commit()
     db.refresh(appointment)
+
     return appointment
 
 
-# DELETE (SOFT)
+# =========================
+# DELETE
+# =========================
 
 def delete_appointment(db: Session, appointment_id: int):
-    appointment = (
-        db.query(Appointment)
-        .filter(Appointment.id == appointment_id, Appointment.is_deleted == False)
-        .first()
-    )
-    if not appointment:
-        return None
+    appointment = _get_appointment_or_404(db, appointment_id)
 
     appointment.is_deleted = True
     db.commit()
+
     return appointment
 
 
-# DOCTOR DASHBOARD HELPERS
+# =========================
+# DASHBOARD
+# =========================
 
 def get_today_appointments(db: Session, doctor_id: int):
     today = date.today()
-    return (
-        db.query(Appointment)
-        .filter(
-            Appointment.doctor_id == doctor_id,
-            Appointment.is_deleted == False,
-            Appointment.appointment_time >= datetime.combine(today, datetime.min.time()),
-            Appointment.appointment_time <= datetime.combine(today, datetime.max.time()),
-        )
-        .all()
-    )
+
+    return db.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.is_deleted == False,
+        Appointment.appointment_time >= datetime.combine(today, datetime.min.time()),
+        Appointment.appointment_time <= datetime.combine(today, datetime.max.time()),
+    ).all()
 
 
 def count_doctor_appointments(db: Session, doctor_id: int):
-    return (
-        db.query(Appointment)
-        .filter(
-            Appointment.doctor_id == doctor_id,
-            Appointment.is_deleted == False
-        )
-        .count()
-    )
+    return db.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.is_deleted == False
+    ).count()
 
 
 def count_upcoming_appointments(db: Session, doctor_id: int):
-    return (
-        db.query(Appointment)
-        .filter(
-            Appointment.doctor_id == doctor_id,
-            Appointment.is_deleted == False,
-            Appointment.status == "planned"
-        )
-        .count()
-    )
+    return db.query(Appointment).filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.is_deleted == False,
+        Appointment.status == "planned"
+    ).count()
