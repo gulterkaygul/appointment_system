@@ -9,7 +9,7 @@ import DoctorRoute from "./routes/DoctorRoute";
 import AdminLayout from "./layouts/AdminLayout";
 import AddAppointment from "./pages/admin/AddAppointment";
 import ProtectedRoute from "./routes/ProtectedRoute";
-
+import ResetPassword from "./pages/ResetPassword";
 
 // Public pages
 import Home from "./pages/Home";
@@ -44,6 +44,7 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/corporate" element={<Corporate />} />
           <Route path="/partners" element={<Partners />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
         {/*  ADMIN LOGIN */}

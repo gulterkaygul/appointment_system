@@ -1,57 +1,74 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useAnimation, AnimatePresence } from "framer-motion";
-import { login } from "../services/authService"; // Sağlam bağlantıyı buraya ekledik
+import { login } from "../services/authService";
 
 export default function Login() {
   const navigate = useNavigate();
+
+  // --- STATES ---
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // Hata mesajı için
+  const [error, setError] = useState("");
+  
+  // Şifre Sıfırlama State'leri (İkinci koddan eklendi)
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotMessage, setForgotMessage] = useState("");
+  
   const [isTyping, setIsTyping] = useState(false);
   const [activeForm, setActiveForm] = useState('login'); 
   const controls = useAnimation();
 
-  // --- ARKA PLAN MANTIĞI (ÇALIŞAN KODDAN GELDİ) ---
+  // --- LOGIN MANTIĞI ---
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(""); // Önceki hataları temizle
+    setError("");
 
     try {
-      // 1. Önceki kalıntıları temizle
       localStorage.removeItem("token");
-      localStorage.setItem("isAuthenticated", "false");
-
-      // 2. Backend'e isteği at
       const data = await login(email, password);
 
-      // 3. Verileri güvenli formatta kaydet
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email,
-          role: data.role,
-        })
-      );
+      localStorage.setItem("user", JSON.stringify({
+        email,
+        role: data.role,
+      }));
 
-      // 4. Role göre doğru yönlendirme
+      // Rol bazlı yönlendirme (İkinci koddaki genişletilmiş liste)
       if (data.role === "admin") {
         navigate("/admin/dashboard");
       } else if (data.role === "doctor") {
         navigate("/doctor/dashboard");
+      } else if (data.role === "patient") {
+        navigate("/patient/dashboard");
       } else {
         navigate("/");
       }
     } catch (err) {
-      // Hata durumunda karakteri üzgün yapabiliriz ama şimdilik sadece hata yazalım
       setError("Email or password incorrect");
       console.error("Login Error:", err);
     }
   };
 
-  // --- DİŞ ANİMASYONLARI (DOKUNULMADI) ---
+  // --- ŞİFRE SIFIRLAMA MANTIĞI (İkinci koddan eklendi) ---
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    try {
+      setForgotMessage("");
+      const res = await fetch("http://127.0.0.1:8000/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail })
+      });
+      const data = await res.json();
+      setForgotMessage(data.message || "Email sent!");
+    } catch (err) {
+      setForgotMessage("Something went wrong");
+    }
+  };
+
+  // --- ANİMASYON AYARLARI ---
   useEffect(() => {
     let idleTimer;
     controls.start("push");
@@ -69,6 +86,7 @@ export default function Login() {
 
   const handleForgotClick = () => {
     setActiveForm('forgot');
+    setForgotMessage(""); // Mesajı temizle
     controls.start({ y: [-50, 0], transition: { duration: 0.6, ease: "backOut" } });
   };
 
@@ -109,7 +127,7 @@ export default function Login() {
             {activeForm === 'login' ? (
               <motion.form 
                 key="login" 
-                onSubmit={handleLogin} // Burası kritik: handleLogin bağlandı
+                onSubmit={handleLogin}
                 onFocus={() => { setIsTyping(true); controls.start("pose"); }} 
                 onBlur={() => setIsTyping(false)} 
                 initial={{ opacity: 0 }} 
@@ -130,7 +148,7 @@ export default function Login() {
                     <label className="text-[10px] text-gray-500 uppercase tracking-widest">Email Address</label>
                     <input 
                       type="email" 
-                      autoComplete="username" // Google uyarısını engeller
+                      autoComplete="username"
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)} 
                       required 
@@ -142,12 +160,12 @@ export default function Login() {
                     <label className="text-[10px] text-gray-500 uppercase tracking-widest">Secure Key</label>
                     <input 
                       type="password" 
-                      autoComplete="current-password" // Google uyarısını engeller
+                      autoComplete="current-password"
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)} 
                       required 
                       className="bg-transparent w-full outline-none text-base py-1" 
-                      placeholder="****" 
+                      placeholder="**" 
                     />
                   </div>
                   <button type="submit" className="w-full bg-[#7f1d1d] py-4 mt-8 rounded-sm font-bold uppercase tracking-widest hover:bg-[#991b1b] transition-all active:scale-95 cursor-pointer">Authorize</button>
@@ -155,11 +173,43 @@ export default function Login() {
                 </div>
               </motion.form>
             ) : (
-              <motion.div key="forgot" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full flex flex-col justify-center px-24 items-center">
+              <motion.div 
+                key="forgot" 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="w-full h-full flex flex-col justify-center px-24 items-center"
+              >
                 <h1 className="text-4xl font-black mb-1 uppercase text-[#f87171]">Recovery</h1>
-                <input type="email" className="bg-transparent border-b border-gray-700 w-full outline-none py-6 text-center" placeholder="ENTER_EMAIL" />
-                <button type="button" className="w-full border border-[#7f1d1d] py-4 mt-6 uppercase font-bold hover:bg-[#7f1d1d] transition-all">Reset Password</button>
-                <button type="button" onClick={() => {setActiveForm('login'); controls.start('pose');}} className="mt-4 text-[10px] underline uppercase cursor-pointer">← Back</button>
+                <p className="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.2em]">Enter credentials for reset</p>
+                
+                <form onSubmit={handleForgotPassword} className="w-full space-y-6">
+                    <input 
+                        type="email" 
+                        required
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        className="bg-transparent border-b border-gray-700 w-full outline-none py-4 text-center text-lg focus:border-red-500 transition-colors" 
+                        placeholder="USER_EMAIL_SECURE" 
+                    />
+                    <button type="submit" className="w-full border border-[#7f1d1d] py-4 mt-2 uppercase font-bold hover:bg-[#7f1d1d] transition-all active:scale-95 cursor-pointer">
+                        Send Reset Link
+                    </button>
+                </form>
+
+                {forgotMessage && (
+                    <p className={`mt-4 text-[10px] font-bold uppercase ${forgotMessage.includes("wrong") ? "text-red-500" : "text-green-500"}`}>
+                        {forgotMessage}
+                    </p>
+                )}
+
+                <button 
+                    type="button" 
+                    onClick={() => {setActiveForm('login'); controls.start('pose');}} 
+                    className="mt-8 text-[10px] underline uppercase tracking-widest text-gray-500 hover:text-white cursor-pointer"
+                >
+                    ← Back to access
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
