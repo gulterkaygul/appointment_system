@@ -55,12 +55,11 @@ def forgot_password(data: schemas.ForgotPasswordRequest, db: Session = Depends(g
 
     token = create_reset_token(user.email)
 
-    # ⚡ Email gönderimini güvenli hale getir
     try:
-        send_reset_email(user.email, token)
+        # send_reset_email fonksiyonuna 'role' parametresini ekle
+        send_reset_email(user.email, token, user.role) 
     except Exception as e:
         print("Email error:", e)
-        # ❗ sistemi kırma, sadece logla
 
     return {
         "message": "If this email exists, a reset link has been sent."
