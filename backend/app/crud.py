@@ -9,8 +9,9 @@ from .models import Patient, Appointment
 # PATIENT CRUD
 # =========================
 
-def create_patient(db: Session, name: str, phone: str):
-    patient = Patient(name=name, phone=phone)
+def create_patient(db: Session, name: str, phone: str, email: str = None):
+    # Artık hasta oluştururken email bilgisini de kaydediyoruz
+    patient = Patient(name=name, phone=phone, email=email)
     db.add(patient)
     db.commit()
     db.refresh(patient)
@@ -106,11 +107,12 @@ def create_public_appointment(
     patient_phone: str,
     doctor_id: int,
     appointment_time: datetime,
+    email: str = None,  # <-- KRİTİK: Terminaldeki TypeError'ı bu satır çözüyor
     department: str | None = None,
     complaint: str | None = None,
 ):
-    # patient oluştur
-    patient = create_patient(db, patient_name, patient_phone)
+    # patient oluştururken artık email parametresini de iletiyoruz
+    patient = create_patient(db, patient_name, patient_phone, email)
 
     # çakışma kontrolü
     _check_conflict(db, doctor_id, appointment_time)

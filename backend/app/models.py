@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
 
-
 # =========================
 # AuditMixin (Soft Delete)
 # =========================
@@ -12,7 +11,6 @@ class AuditMixin:
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_deleted = Column(Boolean, default=False)
-
 
 # =========================
 # Patient Model
@@ -25,14 +23,16 @@ class Patient(Base, AuditMixin):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     phone = Column(String)
+    
+    # 🔥 YENİ: CRUD işlemlerinde TypeError almamak için email sütunu eklendi
+    email = Column(String, nullable=True) 
 
-    # 🔥 YENİ: user bağlantısı
+    # 🔥 user bağlantısı
     user_id = Column(Integer, ForeignKey("public.users.id"), nullable=True)
 
     # ilişkiler
     appointments = relationship("Appointment", back_populates="patient")
     user = relationship("User", back_populates="patient_profile")
-
 
 # =========================
 # Appointment Model
@@ -55,7 +55,6 @@ class Appointment(Base, AuditMixin):
     # ilişkiler
     patient = relationship("Patient", back_populates="appointments")
     doctor = relationship("User", back_populates="doctor_appointments")
-
 
 # =========================
 # User Model

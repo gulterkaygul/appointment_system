@@ -17,7 +17,6 @@ export default function AddAppointment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  //  Load patients & doctors
   useEffect(() => {
     fetchPatients();
     fetchDoctors();
@@ -27,8 +26,8 @@ export default function AddAppointment() {
     try {
       const res = await api.get("/patients/");
       setPatients(res.data);
-    } catch {
-      setError("Failed to load patients");
+    } catch (err) {
+      setError("Failed to load patients list.");
     }
   };
 
@@ -36,34 +35,40 @@ export default function AddAppointment() {
     try {
       const res = await api.get("/users/?role=doctor");
       setDoctors(res.data);
-    } catch {
+    } catch (err) {
       setDoctors([]);
     }
   };
 
-  //  SAVE (ADMIN ENDPOINT)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    try {
-      await api.post("/appointments/admin", {
-        patient_id: Number(patientId),
-        doctor_id: Number(doctorId),
-        department: department.trim(),
-        appointment_time: new Date(appointmentTime).toISOString(),
-        complaint: complaint || "",
-      });
+    // Gönderilecek veriyi hazırlıyoruz
+    const payload = {
+      patient_id: Number(patientId),
+      doctor_id: Number(doctorId),
+      department: department.trim(),
+      appointment_time: new Date(appointmentTime).toISOString(),
+      complaint: complaint.trim() || "", 
+    };
 
-      alert("Appointment created successfully ");
+    try {
+      // DİKKAT: Endpoint'in sonunda ":" veya fazladan "/" olmadığından emin ol
+      await api.post("/appointments/admin", payload);
+
+      alert("Appointment created successfully! ✅");
       navigate("/admin/appointments");
     } catch (err) {
-      console.error("BACKEND ERROR:", err.response?.data);
+      console.error("FULL ERROR OBJECT:", err);
+      
+      // Backend'den gelen detaylı hatayı yakala
+      const backendError = err.response?.data?.detail;
       setError(
-        err.response?.data
-          ? JSON.stringify(err.response.data, null, 2)
-          : "Failed to create appointment"
+        backendError 
+          ? (typeof backendError === 'object' ? JSON.stringify(backendError, null, 2) : backendError)
+          : "Server connection error (CORS or URL issue)."
       );
     } finally {
       setLoading(false);
@@ -71,98 +76,110 @@ export default function AddAppointment() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B2A4A] text-white p-10">
-      <h1 className="text-3xl font-bold mb-8">Add Appointment</h1>
+    <div className="min-h-screen bg-[#0B2A4A] text-white p-10 font-sans">
+      <h1 className="text-3xl font-black mb-8 italic uppercase tracking-widest text-[#6EE7B7]">
+        Add New Appointment
+      </h1>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-[#0F3A5F] p-8 rounded-2xl max-w-2xl shadow-xl"
+        className="bg-[#0F3A5F] p-8 rounded-2xl max-w-2xl shadow-2xl border border-white/10"
       >
         {error && (
-          <pre className="bg-red-500/20 text-red-200 p-4 rounded mb-6 text-sm overflow-x-auto">
-            {error}
-          </pre>
+          <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-4 rounded-xl mb-6 text-xs font-mono">
+            <p className="font-bold mb-1 underline">Validation Error / System Message:</p>
+            <pre className="whitespace-pre-wrap">{error}</pre>
+          </div>
         )}
 
-        {/* Patient */}
-        <label className="block mb-2 font-semibold">Patient</label>
-        <select
-          className="w-full p-2 mb-6 rounded text-black"
-          value={patientId}
-          onChange={(e) => setPatientId(e.target.value)}
-          required
-        >
-          <option value="">Select patient</option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} ({p.phone})
-            </option>
-          ))}
-        </select>
+        <div className="space-y-5">
+          {/* Patient */}
+          <div>
+            <label className="block mb-1 text-xs font-bold text-gray-400 uppercase tracking-widest">Select Patient</label>
+            <select
+              className="w-full p-3 rounded-xl text-black bg-gray-100 outline-none focus:ring-4 focus:ring-green-500/30 transition-all"
+              value={patientId}
+              onChange={(e) => setPatientId(e.target.value)}
+              required
+            >
+              <option value="">-- Search Patient --</option>
+              {patients.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.phone})
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Doctor */}
-        <label className="block mb-2 font-semibold">Doctor</label>
-        <select
-          className="w-full p-2 mb-6 rounded text-black"
-          value={doctorId}
-          onChange={(e) => setDoctorId(e.target.value)}
-          required
-        >
-          <option value="">Select doctor</option>
-          {doctors.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.full_name}
-            </option>
-          ))}
-        </select>
+          {/* Doctor */}
+          <div>
+            <label className="block mb-1 text-xs font-bold text-gray-400 uppercase tracking-widest">Assign Doctor</label>
+            <select
+              className="w-full p-3 rounded-xl text-black bg-gray-100 outline-none focus:ring-4 focus:ring-green-500/30 transition-all"
+              value={doctorId}
+              onChange={(e) => setDoctorId(e.target.value)}
+              required
+            >
+              <option value="">-- Choose Specialist --</option>
+              {doctors.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.full_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Department */}
-        <label className="block mb-2 font-semibold">Department</label>
-        <input
-          type="text"
-          className="w-full p-2 mb-6 rounded text-black"
-          value={department}
-          onChange={(e) => setDepartment(e.target.value)}
-          placeholder="e.g. Orthodontics"
-          required
-        />
+          {/* Department & Date Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 text-xs font-bold text-gray-400 uppercase tracking-widest">Department</label>
+              <input
+                type="text"
+                className="w-full p-3 rounded-xl text-black outline-none focus:ring-4 focus:ring-green-500/30"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                placeholder="e.g. Surgery"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-xs font-bold text-gray-400 uppercase tracking-widest">Date & Time</label>
+              <input
+                type="datetime-local"
+                className="w-full p-3 rounded-xl text-black outline-none focus:ring-4 focus:ring-green-500/30"
+                value={appointmentTime}
+                onChange={(e) => setAppointmentTime(e.target.value)}
+                required
+              />
+            </div>
+          </div>
 
-        {/* Date & Time */}
-        <label className="block mb-2 font-semibold">
-          Appointment Date & Time
-        </label>
-        <input
-          type="datetime-local"
-          className="w-full p-2 mb-6 rounded text-black"
-          value={appointmentTime}
-          onChange={(e) => setAppointmentTime(e.target.value)}
-          required
-        />
+          {/* Complaint */}
+          <div>
+            <label className="block mb-1 text-xs font-bold text-gray-400 uppercase tracking-widest">Patient Complaint</label>
+            <textarea
+              className="w-full p-3 rounded-xl text-black outline-none focus:ring-4 focus:ring-green-500/30"
+              value={complaint}
+              onChange={(e) => setComplaint(e.target.value)}
+              placeholder="Enter details..."
+              rows="3"
+            />
+          </div>
+        </div>
 
-        {/* Complaint */}
-        <label className="block mb-2 font-semibold">Complaint</label>
-        <textarea
-          className="w-full p-2 mb-8 rounded text-black"
-          value={complaint}
-          onChange={(e) => setComplaint(e.target.value)}
-          placeholder="Patient complaint..."
-          rows="4"
-        />
-
-        {/* Actions */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 mt-10">
           <button
             type="submit"
             disabled={loading}
-            className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-xl font-semibold transition"
+            className="flex-1 bg-[#10B981] hover:bg-[#059669] py-3 rounded-xl font-black uppercase tracking-tighter shadow-lg shadow-green-900/20 transition-all active:scale-95 disabled:opacity-50"
           >
-            {loading ? "Saving..." : "Save Appointment"}
+            {loading ? "Processing..." : "Confirm Appointment"}
           </button>
 
           <button
             type="button"
             onClick={() => navigate("/admin/appointments")}
-            className="bg-gray-500 hover:bg-gray-600 px-6 py-2 rounded-xl transition"
+            className="px-8 bg-slate-700 hover:bg-slate-600 rounded-xl transition-all font-bold uppercase text-xs tracking-widest"
           >
             Cancel
           </button>

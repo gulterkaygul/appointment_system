@@ -1,6 +1,9 @@
 import smtplib
 import os
+from dotenv import load_dotenv #python oto .env dosyasini okur
 from email.mime.text import MIMEText
+
+load_dotenv()
 
 # 1. Buraya 'role' parametresini ekledik (Dışarıdan gelecek)
 def send_reset_email(to_email: str, token: str, role: str):

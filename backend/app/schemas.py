@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
 
@@ -8,6 +8,7 @@ from typing import Optional
 class PatientBase(BaseModel):
     name: str
     phone: str
+    email: Optional[str] = None # Hastanın kayıtlı mailini tutmak için ekledik
 
 
 class PatientCreate(PatientBase):
@@ -27,6 +28,7 @@ class PatientMini(BaseModel):
     id: int
     name: str
     phone: str
+    email: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -36,7 +38,7 @@ class AppointmentBase(BaseModel):
     doctor_id: int
     department: str
     appointment_time: datetime
-    complaint: str
+    complaint: Optional[str] = "" # Boş bırakılabilir yaptık
 
 
 class AppointmentCreate(AppointmentBase):
@@ -78,17 +80,17 @@ class Token(BaseModel):
 
 
 # PUBLIC APPOINTMENT (NO LOGIN)
-
+# Burası dışarıdaki hastanın randevu aldığı yer
 class PublicAppointmentCreate(BaseModel):
     patient_name: str
     patient_phone: str
-    email:str
+    email: Optional[str] = None  # ✅ KRİTİK: Optional yaptık, 422 hatasını çözer.
     doctor_id: int
     department: str
     appointment_time: datetime
-    complaint: str
+    complaint: Optional[str] = ""
 
-#forgot password
+# Forgot password
 
 class ForgotPasswordRequest(BaseModel):
     email: str

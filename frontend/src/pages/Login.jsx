@@ -6,15 +6,31 @@ import { login } from "../services/authService";
 export default function Login() {
   const navigate = useNavigate();
 
+  // --- OTURUM KONTROLÜ (YENİ EKLENDİ) ---
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userStr = localStorage.getItem("user");
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        // Eğer kullanıcı zaten giriş yapmışsa direkt paneline postala
+        if (user.role) {
+          navigate(`/${user.role}/dashboard`, { replace: true });
+        }
+      } catch (e) {
+        // Hatalı veri varsa temizle
+        localStorage.clear();
+      }
+    }
+  }, [navigate]);
+
   // --- STATES ---
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  
-  // Şifre Sıfırlama State'leri (İkinci koddan eklendi)
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotMessage, setForgotMessage] = useState("");
-  
   const [isTyping, setIsTyping] = useState(false);
   const [activeForm, setActiveForm] = useState('login'); 
   const controls = useAnimation();
@@ -25,9 +41,13 @@ export default function Login() {
     setError("");
 
     try {
+      // Önceki kalıntıları temizle
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
       const data = await login(email, password);
 
+      // Verileri kaydet
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("user", JSON.stringify({
@@ -35,7 +55,7 @@ export default function Login() {
         role: data.role,
       }));
 
-      // Rol bazlı yönlendirme (İkinci koddaki genişletilmiş liste)
+      // Role göre yönlendir
       if (data.role === "admin") {
         navigate("/admin/dashboard");
       } else if (data.role === "doctor") {
@@ -46,25 +66,25 @@ export default function Login() {
         navigate("/");
       }
     } catch (err) {
-      setError("Email or password incorrect");
+      setError("Credentials invalid. Access denied.");
       console.error("Login Error:", err);
     }
   };
 
-  // --- ŞİFRE SIFIRLAMA MANTIĞI (İkinci koddan eklendi) ---
+  // --- ŞİFRE SIFIRLAMA MANTIĞI ---
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
-      setForgotMessage("");
+      setForgotMessage("Processing...");
       const res = await fetch("http://127.0.0.1:8000/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail })
       });
       const data = await res.json();
-      setForgotMessage(data.message || "Email sent!");
+      setForgotMessage(data.message || "Link sent to your secure mail.");
     } catch (err) {
-      setForgotMessage("Something went wrong");
+      setForgotMessage("System error. Try later.");
     }
   };
 
@@ -86,7 +106,7 @@ export default function Login() {
 
   const handleForgotClick = () => {
     setActiveForm('forgot');
-    setForgotMessage(""); // Mesajı temizle
+    setForgotMessage("");
     controls.start({ y: [-50, 0], transition: { duration: 0.6, ease: "backOut" } });
   };
 
@@ -198,7 +218,7 @@ export default function Login() {
                 </form>
 
                 {forgotMessage && (
-                    <p className={`mt-4 text-[10px] font-bold uppercase ${forgotMessage.includes("wrong") ? "text-red-500" : "text-green-500"}`}>
+                    <p className={`mt-4 text-[10px] font-bold uppercase ${forgotMessage.includes("error") || forgotMessage.includes("Try") ? "text-red-500" : "text-green-500"}`}>
                         {forgotMessage}
                     </p>
                 )}

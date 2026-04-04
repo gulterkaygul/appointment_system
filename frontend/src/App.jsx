@@ -1,15 +1,13 @@
-console.log("APP RENDERED");
-
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Layouts
 import PublicLayout from "./layouts/PublicLayout";
 import DoctorLayout from "./layouts/DoctorLayout";
-import DoctorRoute from "./routes/DoctorRoute";
 import AdminLayout from "./layouts/AdminLayout";
-import AddAppointment from "./pages/admin/AddAppointment";
+
+// Routes & Protection
+import DoctorRoute from "./routes/DoctorRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import ResetPassword from "./pages/ResetPassword";
 
 // Public pages
 import Home from "./pages/Home";
@@ -17,8 +15,9 @@ import Doctors from "./pages/Doctors";
 import Contact from "./pages/Contact";
 import Corporate from "./pages/Corporate";
 import Partners from "./pages/Partners";
+import ResetPassword from "./pages/ResetPassword";
 
-// Login (TEK DOSYA – admin & doctor)
+// Login
 import Login from "./pages/Login";
 
 // Doctor pages
@@ -30,14 +29,17 @@ import TodayAppointments from "./pages/doctor/TodayAppointments";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Patients from "./pages/admin/Patients";
 import Appointments from "./pages/admin/Appointments";
+import AddAppointment from "./pages/admin/AddAppointment";
 
+// Patient pages
+import PatientDashboard from "./pages/patient/PatientDashboard";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* 🌐 PUBLIC WEBSITE (Navbar VAR) */}
+        
+        {/* 🌐 PUBLIC WEBSITE (Navbar & Footer İçeren Kısm) */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/doctors" element={<Doctors />} />
@@ -47,10 +49,15 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
-        {/*  ADMIN LOGIN */}
+        {/* 🔑 LOGIN ROUTES 
+            ResetPassword.jsx'ten gelen yönlendirmeler buradaki yollarla eşleşmeli.
+        */}
+        <Route path="/login" element={<Login />} /> {/* Genel Login */}
         <Route path="/admin/login" element={<Login />} />
+        <Route path="/doctor/login" element={<Login />} />
+        <Route path="/patient/login" element={<Login />} />
 
-        {/*  ADMIN PANEL (NESTED + LAYOUT) */}
+        {/* 🛡️ ADMIN PANEL */}
         <Route
           path="/admin"
           element={
@@ -59,16 +66,14 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="patients" element={<Patients />} />
           <Route path="appointments" element={<Appointments />} />
           <Route path="appointments/new" element={<AddAppointment />} />
         </Route>
 
-        {/*  DOCTOR LOGIN */}
-        <Route path="/doctor/login" element={<Login />} />
-
-        {/*  DOCTOR PANEL */}
+        {/* 🛡️ DOCTOR PANEL */}
         <Route
           path="/doctor"
           element={
@@ -77,10 +82,28 @@ export default function App() {
             </DoctorRoute>
           }
         >
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="appointments" element={<MyAppointments />} />
           <Route path="today" element={<TodayAppointments />} />
         </Route>
+
+        {/* 🛡️ PATIENT PANEL */}
+        <Route
+          path="/patient"
+          element={
+            <ProtectedRoute role="patient">
+              {/* Eğer bir PatientLayout'un yoksa direkt Dashboard'u gösteriyoruz */}
+              <PatientDashboard />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<PatientDashboard />} />
+        </Route>
+
+        {/* 404 - Tanımsız yollar için ana sayfaya yönlendir */}
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
     </BrowserRouter>
