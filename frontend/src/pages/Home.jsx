@@ -33,11 +33,10 @@ export default function Home() {
     setView("login");
   };
 
-  // BUTONUN NEDEN ÇALIŞMADIĞINI ÇÖZEN FONKSİYON
+  // --- DÜZELTİLMİŞ YÖNLENDİRME MANTIĞI ---
   const handleModalLogin = async (e) => {
     if (e) e.preventDefault();
-    console.log("Butona basıldı, giriş deneniyor:", email); // Konsolda görünüp görünmediğine bak
-
+    
     if (!email || !password) {
       alert("Lütfen email ve şifre giriniz.");
       return;
@@ -45,22 +44,32 @@ export default function Home() {
 
     try {
       const data = await login(email, password);
-      console.log("Backend cevabı:", data);
-
+      
       if (data && data.access_token) {
         localStorage.setItem("token", data.access_token);
         localStorage.setItem("user", JSON.stringify({ email, role: data.role }));
         
-        // BAŞARILI GİRİŞ - HASTA PANELİNE GİT
-        alert("Giriş başarılı, yönlendiriliyorsunuz...");
-        navigate("/patient/dashboard");
+        // HATA BURADAYDI: Rolü küçük harfe çevirerek kontrol ediyoruz
+        const userRole = data.role ? data.role.toLowerCase() : "";
+        
+        console.log("Giriş yapan rol:", userRole); // Konsoldan kontrol edebilirsin
+
+        if (userRole === "admin") {
+          navigate("/admin/dashboard");
+        } else if (userRole === "doctor") {
+          navigate("/doctor/dashboard");
+        } else {
+          // Geri kalan her şey (patient veya boş gelirse) buraya düşer
+          navigate("/patient/dashboard");
+        }
+        
         setOpen(false);
       } else {
         alert("Giriş başarısız: Token alınamadı.");
       }
     } catch (err) {
       console.error("Hata detayı:", err);
-      alert("Bağlantı hatası! Sunucu çalışıyor mu?");
+      alert("Giriş yapılamadı. Bilgilerinizi kontrol edin.");
     }
   };
 
@@ -106,7 +115,6 @@ export default function Home() {
                     <input className="bg-[#0B2A4A] border border-blue-400/30 p-3 rounded-lg text-white" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
                     <input className="bg-[#0B2A4A] border border-blue-400/30 p-3 rounded-lg text-white" type="password" placeholder="Şifre" value={password} onChange={e => setPassword(e.target.value)} />
                     
-                    {/* ASIL ÇALIŞACAK BUTON */}
                     <button type="button" onClick={handleModalLogin} className="bg-[#0A66C2] py-4 rounded-lg font-bold text-white shadow-md active:scale-95 transition-all">Giriş Yap ve Devam Et</button>
                     
                     <button onClick={() => setView("register")} className="text-blue-300 text-sm hover:underline">Üye ol ve Randevu al</button>
@@ -150,10 +158,10 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 py-24">
-        <h3 className="text-3xl font-bold mb-6 text-white">Why Choose Us?</h3>
+      <section className="max-w-7xl mx-auto px-6 py-24 text-white">
+        <h3 className="text-3xl font-bold mb-6">Why Choose Us?</h3>
         <p className="max-w-4xl mb-12 text-lg text-[#CFE6F7]">Our Dental Hospital combines academic excellence and modern infrastructure.</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {[
             { title: "Advanced Medical Technology", img: "https://neu.edu.tr/wp-content/uploads/2022/01/11/Yakin-Dogu-Universitesi-Dis-Hastanesi-scaled.jpg", text: "State-of-the-art diagnostic technologies." },
             { title: "Expert Academic Staff", img: "https://photos.wikimapia.org/p/00/08/10/12/94_big.jpg", text: "Highly experienced dentists." }

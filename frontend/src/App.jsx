@@ -6,7 +6,6 @@ import DoctorLayout from "./layouts/DoctorLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
 // Routes & Protection
-import DoctorRoute from "./routes/DoctorRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Public pages
@@ -39,7 +38,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         
-        {/* 🌐 PUBLIC WEBSITE (Navbar & Footer İçeren Kısm) */}
+        {/* 🌐 PUBLIC WEBSITE */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/doctors" element={<Doctors />} />
@@ -49,10 +48,8 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
-        {/* 🔑 LOGIN ROUTES 
-            ResetPassword.jsx'ten gelen yönlendirmeler buradaki yollarla eşleşmeli.
-        */}
-        <Route path="/login" element={<Login />} /> {/* Genel Login */}
+        {/* 🔑 LOGIN ROUTES */}
+        <Route path="/login" element={<Login />} />
         <Route path="/admin/login" element={<Login />} />
         <Route path="/doctor/login" element={<Login />} />
         <Route path="/patient/login" element={<Login />} />
@@ -77,9 +74,9 @@ export default function App() {
         <Route
           path="/doctor"
           element={
-            <DoctorRoute>
+            <ProtectedRoute role="doctor">
               <DoctorLayout />
-            </DoctorRoute>
+            </ProtectedRoute>
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
@@ -93,7 +90,7 @@ export default function App() {
           path="/patient"
           element={
             <ProtectedRoute role="patient">
-              {/* Eğer bir PatientLayout'un yoksa direkt Dashboard'u gösteriyoruz */}
+              {/* Patient için bir Layout varsa buraya ekleyebilirsin */}
               <PatientDashboard />
             </ProtectedRoute>
           }
@@ -102,7 +99,7 @@ export default function App() {
           <Route path="dashboard" element={<PatientDashboard />} />
         </Route>
 
-        {/* 404 - Tanımsız yollar için ana sayfaya yönlendir */}
+        {/* 404 - Tanımsız yollar */}
         <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>

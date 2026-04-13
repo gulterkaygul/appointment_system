@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, useAnimation, AnimatePresence } from "framer-motion";
 import { login } from "../services/authService";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // --- OTURUM KONTROLÜ (YENİ EKLENDİ) ---
+  // --- AKILLI OTURUM KONTROLÜ (Çakışma Önleyici) ---
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
@@ -14,12 +15,29 @@ export default function Login() {
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
-        // Eğer kullanıcı zaten giriş yapmışsa direkt paneline postala
-        if (user.role) {
-          navigate(`/${user.role}/dashboard`, { replace: true });
+        const safeRole = user.role?.toLowerCase().trim();
+        const currentPath = window.location.pathname.toLowerCase();
+
+        if (safeRole) {
+          // Eğer manuel olarak farklı bir login sayfasına gidilirse (Örn: admin/login)
+          // ve mevcut yetki o rolle eşleşmiyorsa, eski oturumu temizle.
+          const isTryingAdmin = currentPath.includes("admin");
+          const isTryingDoctor = currentPath.includes("doctor");
+          const isTryingPatient = currentPath.includes("patient");
+
+          if (
+            (isTryingAdmin && safeRole !== "admin") ||
+            (isTryingDoctor && safeRole !== "doctor") ||
+            (isTryingPatient && safeRole !== "patient")
+          ) {
+            console.log("Rol çakışması algılandı, oturum temizleniyor...");
+            localStorage.clear();
+          } else {
+            // Rol ve URL uyumluysa veya genel /login sayfasındaysak yönlendir
+            navigate(`/${safeRole}/dashboard`, { replace: true });
+          }
         }
       } catch (e) {
-        // Hatalı veri varsa temizle
         localStorage.clear();
       }
     }
@@ -41,32 +59,31 @@ export default function Login() {
     setError("");
 
     try {
-      // Önceki kalıntıları temizle
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      // Giriş yapmadan önce her ihtimale karşı temizlik
+      localStorage.clear();
 
       const data = await login(email, password);
 
-      // Verileri kaydet
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("user", JSON.stringify({
-        email,
-        role: data.role,
-      }));
+      if (data && data.access_token) {
+        const role = data.role ? String(data.role).toLowerCase().trim() : "patient";
 
-      // Role göre yönlendir
-      if (data.role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (data.role === "doctor") {
-        navigate("/doctor/dashboard");
-      } else if (data.role === "patient") {
-        navigate("/patient/dashboard");
+        // Verileri taze taze kaydet
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("user", JSON.stringify({
+          email: email,
+          role: role,
+        }));
+
+        console.log("Giriş Başarılı. Yeni Rol:", role);
+
+        // Dinamik Yönlendirme
+        navigate(`/${role}/dashboard`, { replace: true });
       } else {
-        navigate("/");
+        setError("Giriş başarısız: Yetki belgesi alınamadı.");
       }
     } catch (err) {
-      setError("Credentials invalid. Access denied.");
+      setError("E-posta veya şifre hatalı.");
       console.error("Login Error:", err);
     }
   };
@@ -75,16 +92,16 @@ export default function Login() {
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
-      setForgotMessage("Processing...");
+      setForgotMessage("İşleniyor...");
       const res = await fetch("http://127.0.0.1:8000/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail })
       });
       const data = await res.json();
-      setForgotMessage(data.message || "Link sent to your secure mail.");
+      setForgotMessage(data.message || "Bağlantı e-postanıza gönderildi.");
     } catch (err) {
-      setForgotMessage("System error. Try later.");
+      setForgotMessage("Sistem hatası. Tekrar deneyin.");
     }
   };
 
@@ -160,32 +177,30 @@ export default function Login() {
                   {error ? (
                      <p className="text-red-500 text-xs font-bold uppercase tracking-tighter pt-4">{error}</p>
                   ) : (
-                     <p className="text-[#f87171] text-lg font-black tracking-widest pt-6 uppercase">Welcome Back!</p>
+                     <p className="text-[#f87171] text-lg font-black tracking-widest pt-6 uppercase">Welcome!</p>
                   )}
                 </div>
                 <div className="space-y-8 flex flex-col">
                   <div className="border-b border-gray-700 focus-within:border-red-800 transition-colors pb-1">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Email Address</label>
+                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Email</label>
                     <input 
                       type="email" 
-                      autoComplete="username"
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)} 
                       required 
                       className="bg-transparent w-full outline-none text-base py-1" 
-                      placeholder="doctor@system.com" 
+                      placeholder="user@system.com" 
                     />
                   </div>
                   <div className="border-b border-gray-700 focus-within:border-red-800 transition-colors pb-1">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Secure Key</label>
+                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Password</label>
                     <input 
                       type="password" 
-                      autoComplete="current-password"
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)} 
                       required 
                       className="bg-transparent w-full outline-none text-base py-1" 
-                      placeholder="**" 
+                      placeholder="****" 
                     />
                   </div>
                   <button type="submit" className="w-full bg-[#7f1d1d] py-4 mt-8 rounded-sm font-bold uppercase tracking-widest hover:bg-[#991b1b] transition-all active:scale-95 cursor-pointer">Authorize</button>
@@ -201,8 +216,7 @@ export default function Login() {
                 className="w-full h-full flex flex-col justify-center px-24 items-center"
               >
                 <h1 className="text-4xl font-black mb-1 uppercase text-[#f87171]">Recovery</h1>
-                <p className="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.2em]">Enter credentials for reset</p>
-                
+                <p className="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.2em]">Enter credentials</p>
                 <form onSubmit={handleForgotPassword} className="w-full space-y-6">
                     <input 
                         type="email" 
@@ -210,25 +224,23 @@ export default function Login() {
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
                         className="bg-transparent border-b border-gray-700 w-full outline-none py-4 text-center text-lg focus:border-red-500 transition-colors" 
-                        placeholder="USER_EMAIL_SECURE" 
+                        placeholder="EMAIL_ADDRESS" 
                     />
                     <button type="submit" className="w-full border border-[#7f1d1d] py-4 mt-2 uppercase font-bold hover:bg-[#7f1d1d] transition-all active:scale-95 cursor-pointer">
-                        Send Reset Link
+                        Send Link
                     </button>
                 </form>
-
                 {forgotMessage && (
-                    <p className={`mt-4 text-[10px] font-bold uppercase ${forgotMessage.includes("error") || forgotMessage.includes("Try") ? "text-red-500" : "text-green-500"}`}>
+                    <p className={`mt-4 text-[10px] font-bold uppercase ${forgotMessage.includes("error") ? "text-red-500" : "text-green-500"}`}>
                         {forgotMessage}
                     </p>
                 )}
-
                 <button 
                     type="button" 
                     onClick={() => {setActiveForm('login'); controls.start('pose');}} 
                     className="mt-8 text-[10px] underline uppercase tracking-widest text-gray-500 hover:text-white cursor-pointer"
                 >
-                    ← Back to access
+                    ← Back to Login
                 </button>
               </motion.div>
             )}
