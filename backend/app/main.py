@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, patients, appointments, public, doctor, admin, users
+# chatbot eklendi
+from app.routers import auth, patients, appointments, public, doctor, admin, users, chatbot 
 from app.database import SessionLocal
 
 app = FastAPI(
@@ -11,7 +12,7 @@ app = FastAPI(
     swagger_ui_parameters={"defaultModelsExpandDepth": -1}
 )
 
-#CORS (routersdan once)
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -23,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#ROUTERS
+# ROUTERS
 app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(appointments.router)
@@ -31,8 +32,9 @@ app.include_router(public.router)
 app.include_router(doctor.router)
 app.include_router(admin.router)
 app.include_router(users.router)
+app.include_router(chatbot.router) # Burası yeni eklendi
 
-#DB Dependency
+# DB Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -40,7 +42,6 @@ def get_db():
     finally:
         db.close()
 
-#Root
 @app.get("/")
 def home():
     return {"message": "Welcome to the Dentist Appointment System!"}

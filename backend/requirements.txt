@@ -1,12 +1,22 @@
+# Web Framework & Server
 fastapi==0.110.0
 uvicorn[standard]==0.29.0
 
+# Database & Migration
 sqlalchemy==2.0.29
 psycopg2-binary==2.9.9
 alembic==1.13.1
 
+# AI & Chatbot
+langchain
+langchain-google-genai
+langchain-experimental
+google-generativeai
+
+# Validation & Environment
 pydantic==2.6.4
 python-dotenv==1.0.1
 
+# Security & Auth
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
