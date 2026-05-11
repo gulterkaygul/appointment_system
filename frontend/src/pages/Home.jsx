@@ -8,6 +8,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState("login");
+  const [chatOpen, setChatOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -106,6 +107,60 @@ export default function Home() {
                 <h1 className="text-4xl font-bold mb-4 leading-tight">Near East University<br />Dental Hospital</h1>
                 <p className="mb-6 text-lg text-[#D6E9F8]">Modern technology, expert dentists, patient-centered healthcare</p>
                 <button onClick={openModal} className="w-fit px-10 py-4 bg-[#0A66C2] rounded-xl text-lg hover:bg-[#084C91] transition-transform transform hover:scale-105">Book Appointment</button>
+                {/* MODERN LIVE CHAT WIDGET */}
+<div className="mt-6">
+
+  {/* BUTTON (glass effect) */}
+  <button
+    onClick={() => setChatOpen(!chatOpen)}
+    className="flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full shadow-lg hover:scale-105 transition"
+  >
+    💬 Live Support
+  </button>
+
+  {/* CHAT PANEL */}
+  {chatOpen && (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="mt-4 w-full max-w-md bg-[#0F3A5F]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+    >
+
+      {/* HEADER */}
+      <div className="flex items-center justify-between px-4 py-3 bg-[#0A66C2] text-white">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <span className="font-semibold">AI Support</span>
+        </div>
+        <button onClick={() => setChatOpen(false)} className="text-white/80 hover:text-white">
+          ✕
+        </button>
+      </div>
+
+      {/* CHAT AREA */}
+      <div className="h-40 overflow-y-auto p-3 space-y-2 text-sm text-[#EAF4FF]">
+        <div className="bg-[#0B2A4A] p-2 rounded-lg w-fit max-w-[80%]">
+          Hi 👋 How can I help you today?
+        </div>
+      </div>
+
+      {/* INPUT */}
+      <div className="p-3 border-t border-white/10 flex gap-2">
+        <input
+          className="flex-1 p-2 rounded-lg bg-[#0B2A4A] text-white text-sm outline-none"
+          placeholder="Type message..."
+        />
+        <button className="bg-[#0A66C2] px-4 rounded-lg text-sm hover:bg-[#084C91]">
+          Send
+        </button>
+      </div>
+
+    </motion.div>
+  )}
+
+</div>
               </motion.div>
             ) : (
               <motion.div key="form-view" initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="w-full max-w-lg mx-auto py-4">
@@ -177,6 +232,88 @@ export default function Home() {
           ))}
         </div>
       </section>
+      {/* CONTACT SECTION UPGRADED */}
+<section className="max-w-7xl mx-auto px-6 py-24 border-t border-white/10">
+
+  <h3 className="text-4xl font-bold text-center mb-4">Contact Us</h3>
+
+  <p className="text-center text-[#CFE6F7] max-w-3xl mx-auto mb-14">
+    For appointments, inquiries, or emergency services, reach our dental hospital team anytime.
+  </p>
+
+  <div className="grid md:grid-cols-2 gap-12">
+
+    {/* LEFT INFO */}
+    <div className="space-y-8">
+
+      <div>
+        <h4 className="text-xl font-semibold mb-1">Phone</h4>
+        <p className="text-[#CFE6F7]">+90 392 680 20 30</p>
+        <p className="text-[#CFE6F7]">+90 392 680 20 25</p>
+      </div>
+
+      <div>
+        <h4 className="text-xl font-semibold mb-1">Email</h4>
+        <p className="text-[#CFE6F7]">neudental@neu.edu.tr</p>
+      </div>
+
+      <div>
+        <h4 className="text-xl font-semibold mb-1">Address</h4>
+        <p className="text-[#CFE6F7] leading-relaxed">
+          Near East University<br />
+          Yakın Doğu Bulvarı, PK:922022<br />
+          Lefkoşa / KKTC<br />
+          Mersin 10 – Turkey
+        </p>
+      </div>
+
+      <div>
+        <h4 className="text-xl font-semibold mb-1">Emergency / Hospital</h4>
+        <p className="text-[#CFE6F7]">Emergency: 153</p>
+        <p className="text-[#CFE6F7]">Hospital: +90 392 444 0 535</p>
+      </div>
+
+      <div>
+        <h4 className="text-xl font-semibold mb-1">Working Hours</h4>
+        <p className="text-[#CFE6F7]">Monday - Friday: 09:00 - 17:30</p>
+        <p className="text-[#CFE6F7]">Saturday: 09:00 - 13:30</p>
+        <p className="text-[#CFE6F7]">Sunday: Closed</p>
+      </div>
+
+    </div>
+
+    {/* RIGHT CARD (MODERN UI AREA) */}
+    <div className="bg-[#0F3A5F] border border-white/10 rounded-2xl p-8 shadow-xl">
+
+      <h4 className="text-2xl font-bold mb-6">Quick Contact</h4>
+
+      <div className="space-y-4">
+
+        <input
+          placeholder="Your Name"
+          className="w-full p-3 rounded bg-[#0B2A4A] border border-white/10"
+        />
+
+        <input
+          placeholder="Email"
+          className="w-full p-3 rounded bg-[#0B2A4A] border border-white/10"
+        />
+
+        <textarea
+          placeholder="Your Message"
+          rows={5}
+          className="w-full p-3 rounded bg-[#0B2A4A] border border-white/10"
+        />
+
+        <button className="w-full bg-[#0A66C2] py-3 rounded font-bold hover:bg-[#084C91] transition">
+          Send Message
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+</section>
       <Footer />
     </div>
   );
