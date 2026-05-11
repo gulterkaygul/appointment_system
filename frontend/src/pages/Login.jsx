@@ -1,54 +1,20 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, useAnimation, AnimatePresence } from "framer-motion";
 import { login } from "../services/authService";
 
 export default function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // --- AKILLI OTURUM KONTROLÜ (Çakışma Önleyici) ---
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
-    
-    if (token && userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        const safeRole = user.role?.toLowerCase().trim();
-        const currentPath = window.location.pathname.toLowerCase();
-
-        if (safeRole) {
-          // Eğer manuel olarak farklı bir login sayfasına gidilirse (Örn: admin/login)
-          // ve mevcut yetki o rolle eşleşmiyorsa, eski oturumu temizle.
-          const isTryingAdmin = currentPath.includes("admin");
-          const isTryingDoctor = currentPath.includes("doctor");
-          const isTryingPatient = currentPath.includes("patient");
-
-          if (
-            (isTryingAdmin && safeRole !== "admin") ||
-            (isTryingDoctor && safeRole !== "doctor") ||
-            (isTryingPatient && safeRole !== "patient")
-          ) {
-            console.log("Rol çakışması algılandı, oturum temizleniyor...");
-            localStorage.clear();
-          } else {
-            // Rol ve URL uyumluysa veya genel /login sayfasındaysak yönlendir
-            navigate(`/${safeRole}/dashboard`, { replace: true });
-          }
-        }
-      } catch (e) {
-        localStorage.clear();
-      }
-    }
-  }, [navigate]);
 
   // --- STATES ---
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  
+  // Şifre Sıfırlama State'leri (İkinci koddan eklendi)
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotMessage, setForgotMessage] = useState("");
+  
   const [isTyping, setIsTyping] = useState(false);
   const [activeForm, setActiveForm] = useState('login'); 
   const controls = useAnimation();
@@ -59,49 +25,46 @@ export default function Login() {
     setError("");
 
     try {
-      // Giriş yapmadan önce her ihtimale karşı temizlik
-      localStorage.clear();
-
+      localStorage.removeItem("token");
       const data = await login(email, password);
 
-      if (data && data.access_token) {
-        const role = data.role ? String(data.role).toLowerCase().trim() : "patient";
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("user", JSON.stringify({
+        email,
+        role: data.role,
+      }));
 
-        // Verileri taze taze kaydet
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("user", JSON.stringify({
-          email: email,
-          role: role,
-        }));
-
-        console.log("Giriş Başarılı. Yeni Rol:", role);
-
-        // Dinamik Yönlendirme
-        navigate(`/${role}/dashboard`, { replace: true });
+      // Rol bazlı yönlendirme (İkinci koddaki genişletilmiş liste)
+      if (data.role === "admin") {
+        navigate("/admin/dashboard");
+      } else if (data.role === "doctor") {
+        navigate("/doctor/dashboard");
+      } else if (data.role === "patient") {
+        navigate("/patient/dashboard");
       } else {
-        setError("Giriş başarısız: Yetki belgesi alınamadı.");
+        navigate("/");
       }
     } catch (err) {
-      setError("E-posta veya şifre hatalı.");
+      setError("Email or password incorrect");
       console.error("Login Error:", err);
     }
   };
 
-  // --- ŞİFRE SIFIRLAMA MANTIĞI ---
+  // --- ŞİFRE SIFIRLAMA MANTIĞI (İkinci koddan eklendi) ---
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
-      setForgotMessage("İşleniyor...");
+      setForgotMessage("");
       const res = await fetch("http://127.0.0.1:8000/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail })
       });
       const data = await res.json();
-      setForgotMessage(data.message || "Bağlantı e-postanıza gönderildi.");
+      setForgotMessage(data.message || "Email sent!");
     } catch (err) {
-      setForgotMessage("Sistem hatası. Tekrar deneyin.");
+      setForgotMessage("Something went wrong");
     }
   };
 
@@ -123,7 +86,7 @@ export default function Login() {
 
   const handleForgotClick = () => {
     setActiveForm('forgot');
-    setForgotMessage("");
+    setForgotMessage(""); // Mesajı temizle
     controls.start({ y: [-50, 0], transition: { duration: 0.6, ease: "backOut" } });
   };
 
@@ -177,30 +140,32 @@ export default function Login() {
                   {error ? (
                      <p className="text-red-500 text-xs font-bold uppercase tracking-tighter pt-4">{error}</p>
                   ) : (
-                     <p className="text-[#f87171] text-lg font-black tracking-widest pt-6 uppercase">Welcome!</p>
+                     <p className="text-[#f87171] text-lg font-black tracking-widest pt-6 uppercase">Welcome Back!</p>
                   )}
                 </div>
                 <div className="space-y-8 flex flex-col">
                   <div className="border-b border-gray-700 focus-within:border-red-800 transition-colors pb-1">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Email</label>
+                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Email Address</label>
                     <input 
                       type="email" 
+                      autoComplete="username"
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)} 
                       required 
                       className="bg-transparent w-full outline-none text-base py-1" 
-                      placeholder="user@system.com" 
+                      placeholder="doctor@system.com" 
                     />
                   </div>
                   <div className="border-b border-gray-700 focus-within:border-red-800 transition-colors pb-1">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Password</label>
+                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Secure Key</label>
                     <input 
                       type="password" 
+                      autoComplete="current-password"
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)} 
                       required 
                       className="bg-transparent w-full outline-none text-base py-1" 
-                      placeholder="****" 
+                      placeholder="**" 
                     />
                   </div>
                   <button type="submit" className="w-full bg-[#7f1d1d] py-4 mt-8 rounded-sm font-bold uppercase tracking-widest hover:bg-[#991b1b] transition-all active:scale-95 cursor-pointer">Authorize</button>
@@ -216,7 +181,8 @@ export default function Login() {
                 className="w-full h-full flex flex-col justify-center px-24 items-center"
               >
                 <h1 className="text-4xl font-black mb-1 uppercase text-[#f87171]">Recovery</h1>
-                <p className="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.2em]">Enter credentials</p>
+                <p className="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.2em]">Enter credentials for reset</p>
+                
                 <form onSubmit={handleForgotPassword} className="w-full space-y-6">
                     <input 
                         type="email" 
@@ -224,23 +190,25 @@ export default function Login() {
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
                         className="bg-transparent border-b border-gray-700 w-full outline-none py-4 text-center text-lg focus:border-red-500 transition-colors" 
-                        placeholder="EMAIL_ADDRESS" 
+                        placeholder="USER_EMAIL_SECURE" 
                     />
                     <button type="submit" className="w-full border border-[#7f1d1d] py-4 mt-2 uppercase font-bold hover:bg-[#7f1d1d] transition-all active:scale-95 cursor-pointer">
-                        Send Link
+                        Send Reset Link
                     </button>
                 </form>
+
                 {forgotMessage && (
-                    <p className={`mt-4 text-[10px] font-bold uppercase ${forgotMessage.includes("error") ? "text-red-500" : "text-green-500"}`}>
+                    <p className={`mt-4 text-[10px] font-bold uppercase ${forgotMessage.includes("wrong") ? "text-red-500" : "text-green-500"}`}>
                         {forgotMessage}
                     </p>
                 )}
+
                 <button 
                     type="button" 
                     onClick={() => {setActiveForm('login'); controls.start('pose');}} 
                     className="mt-8 text-[10px] underline uppercase tracking-widest text-gray-500 hover:text-white cursor-pointer"
                 >
-                    ← Back to Login
+                    ← Back to access
                 </button>
               </motion.div>
             )}
