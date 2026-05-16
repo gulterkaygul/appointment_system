@@ -6,7 +6,7 @@ router = APIRouter(
     tags=["Chatbot"]
 )
 
-@router.post("")
+@router.post("/")
 async def chat_with_ai(message: str = Body(..., embed=True)):
     """
     Yapay zeka asistanı ile mesajlaşın.

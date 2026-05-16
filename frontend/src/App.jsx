@@ -33,6 +33,9 @@ import AddAppointment from "./pages/admin/AddAppointment";
 // Patient pages
 import PatientDashboard from "./pages/patient/PatientDashboard";
 
+// Chatbot Component - Yeni eklendi
+import ChatWidget from "./components/ChatWidget";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -103,6 +106,9 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
+
+      {/* Chatbot her zaman en üstte ve her sayfada görünür */}
+      <ChatWidget />
     </BrowserRouter>
   );
 }
