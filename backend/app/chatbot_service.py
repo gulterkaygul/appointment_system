@@ -14,7 +14,7 @@ pg_uri = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB
 db = SQLDatabase.from_uri(pg_uri, include_tables=['patients', 'appointments', 'users'])
 llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite-preview", temperature=0)
 
-# 2. SQL PROMPT WITH SECURITY & ENGLISH TONE RULES
+# 2. 🔐 SQL PROMPT WITH SECURITY, PHONE, AND EMAIL AUTOMATION RULES
 sql_template = """
 You are an expert data assistant for 'Özel Diş Hastanesi' (Private Dental Hospital).
 Your job is to convert the user's request into a valid PostgreSQL query and return the final natural language answer.
@@ -23,11 +23,13 @@ CRITICAL TONE & LANGUAGE RULES:
 1. You MUST ALWAYS reply in ENGLISH.
 2. When confirming a newly created appointment or talking about a patient, you MUST ALWAYS address them politely using "Dear [Patient Name]". For example: "Dear Cem Ak, your appointment has been successfully created..." or "Dear [Name], ...". Never skip the word "Dear".
 
-CRITICAL SECURITY RULES:
-1. NEVER, UNDER ANY CIRCUMSTANCES, write a query that selects passwords, hashes, tokens, or credentials from 'users', 'rules', 'patients', or any other table.
-2. If the user explicitly asks for passwords, credentials, or pins, DO NOT execute any SQL query. Instead, your SQLQuery output must be exactly: "SECURITY_BLOCK"
-3. If the user wants to book an appointment, write a valid INSERT statement into 'appointments'.
-4. Always return a polite English answer.
+CRITICAL DATA & SECURITY RULES:
+1. When inserting a new patient into the 'patients' table, you MUST provide a valid string for the 'phone' field using the phone number provided by the user.
+2. If the 'patients' table requires an 'email' field, automatically generate a dummy email based on the patient's name (e.g., for "Cem Ak", use "cem.ak@example.com") and insert it so the database constraints do not fail.
+3. NEVER, UNDER ANY CIRCUMSTANCES, write a query that selects passwords, hashes, tokens, or credentials from 'users', 'patients', or any other table.
+4. If the user explicitly asks for passwords, credentials, or pins, DO NOT execute any SQL query. Instead, your SQLQuery output must be exactly: "SECURITY_BLOCK"
+5. If the user wants to book an appointment, write a valid INSERT statement into 'appointments'.
+6. Always return a polite English answer.
 
 Database Tables: {table_info}
 Question: {input}
@@ -37,7 +39,7 @@ CUSTOM_PROMPT = PromptTemplate(input_variables=["input", "table_info"], template
 db_chain = SQLDatabaseChain.from_llm(llm, db, prompt=CUSTOM_PROMPT, verbose=True, use_query_checker=True)
 
 # -------------------------------------------------------------------------
-#  3. SECURE & FLEXIBLE ANALYSIS MECHANISM (ENGLISH VERSION)
+# 🚀 3. SECURE & FLEXIBLE ANALYSIS MECHANISM (ENGLISH VERSION)
 # -------------------------------------------------------------------------
 def get_chatbot_response(user_query):
     query_lower = user_query.lower().strip()
@@ -57,16 +59,16 @@ def get_chatbot_response(user_query):
     if query_lower in thanks_keywords:
         return "You're very welcome! It was a pleasure helping you. We wish you a healthy and happy day! Let me know if you need anything else."
 
-    # 📅 INITIAL APPOINTMENT REQUEST FILTER (Cümlenin içinde geçiyorsa direkt yakalar!)
+    # 📅 INITIAL APPOINTMENT REQUEST FILTER (Şimdi telefon numarasını da istiyor!)
     if ("appointment" in query_lower or "book" in query_lower or "randevu" in query_lower) and not any(char.isdigit() for char in query_lower):
-        return "I would be happy to help you book an appointment. Please provide the following details separated by commas: Patient Full Name, Doctor Name, Desired Date and Time. (e.g., Cem Ak, Dr. Ahmet Kaya, 2026-06-02 14:00)"
+        return "I would be happy to help you book an appointment. Please provide the following details separated by commas: Patient Full Name, Phone Number, Doctor Name, Desired Date and Time. (e.g., Cem Ak, 05551234567, Dr. Ahmet Kaya, 2026-06-02 14:00)"
 
     # AI Smart Decision Mechanism
     analysis_prompt = f"""
     Analyze the user's message for a hospital chatbot: "{user_query}"
     Determine the intent and output EXACTLY ONE of these words:
     
-    - RANDEVU_KAYIT: If the user is directly providing appointment details (e.g., names, doctor, date/time like "Cem Ak, Ahmet Kaya, 2026-06-02 14:00").
+    - RANDEVU_KAYIT: If the user is directly providing appointment details (e.g., names, phone number, doctor, date/time like "Cem Ak, 05551234567, Ahmet Kaya, 2026-06-02 14:00").
     - VERITABANI: If the user is asking for hospital statistics, doctor counts, or info.
     
     Output only the word RANDEVU_KAYIT or VERITABANI. Do not write anything else.
