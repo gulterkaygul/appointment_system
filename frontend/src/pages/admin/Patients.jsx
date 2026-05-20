@@ -33,10 +33,11 @@ export default function Patients() {
   // SAVE PATIENT
   const savePatient = () => {
     const method = editing ? "PUT" : "POST";
-
     const url = editing
       ? `http://127.0.0.1:8000/patients/${editing.id}`
-      : "http://127.0.0.1:8000/patients";
+      : "http://127.0.0.1:8000/patients/";
+
+    console.log("🚀 [FRONTEND] İstek atılıyor...", { url, method, name, phone, email });
 
     fetch(url, {
       method,
@@ -44,29 +45,24 @@ export default function Patients() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-
-      // 🔥 EMAIL SORUNU ÇÖZÜLDÜ
-      body: JSON.stringify({
-        name,
-        phone,
-        email,
-      }),
-    }).then((res) => {
+      body: JSON.stringify({ name, phone, email }),
+    }).then(async (res) => {
+      console.log("📡 Sunucu Durum Kodu:", res.status);
       if (res.ok) {
         setOpen(false);
         setEditing(null);
-
         setName("");
         setPhone("");
         setEmail("");
-
         fetchPatients();
       } else {
-        alert("Operation failed. Email may already exist.");
+        const errorData = await res.json().catch(() => ({ detail: "Bilinmeyen hata" }));
+        console.error("❌ Sunucudan Dönen Hata:", errorData);
+        alert(`Başarısız! Hata Kodu (${res.status}): ${errorData.detail || JSON.stringify(errorData)}`);
       }
     });
   };
-
+  
   // DELETE
   const deletePatient = (id) => {
     if (!window.confirm("Delete this patient?")) return;

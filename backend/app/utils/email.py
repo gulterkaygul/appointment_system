@@ -27,11 +27,11 @@ def send_reset_email(to_email: str, token: str, role: str):
 
     # 🔥 TRY-EXCEPT BLOĞUNU KALDIRDIK! HATA NEBEYSE TERMİNALE PATLAYACAK!
     # Eğer port engeli varsa alternatif port olan 2525'i deniyoruz:
-    server = smtplib.SMTP("sandbox.smtp.mailtrap.io", 2525) 
+    server = smtplib.SMTP("sandbox.smtp.mailtrap.io", 587) 
     server.starttls()
 
-    username = "7f388a3f874fd6" 
-    password = "473775a81bd33b"
+    username = "2270e00c489464" 
+    password = "b30fbd5ed5c5bb"
 
     server.login(username, password)
     server.send_message(msg)

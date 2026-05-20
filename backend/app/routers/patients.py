@@ -31,8 +31,9 @@ def read_patients(
 
 
 # POST create patient + AUTOMATIC USER CREATION & EMAIL SEND 🔥
+# 💥 DÜZELTME: Fonksiyonu 'async def' yaptık!
 @router.post("/", response_model=schemas.PatientRead)
-def create_patient(
+async def create_patient(
     patient: schemas.PatientCreate,
     db: Session = Depends(get_db)
 ):
@@ -74,6 +75,7 @@ def create_patient(
         )
         db.add(new_user)
         db.commit()
+        db.refresh(new_user)
         print(f"✅ [DATABASE] User credentials successfully tied for: {patient_email}")
 
     except Exception as db_err:
@@ -85,26 +87,32 @@ def create_patient(
             detail="Database synchronization error occurred."
         )
 
-    # 4. Reset token üret
-    token = create_reset_token(patient_email)
-
-    # 5. Email gönder (Mailtrap Sandbox'a fırlat)
     try:
-        send_reset_email(
-            to_email=patient_email,
-            token=token,
-            role="patient"
-        )
+        print(f"🔄 [TOKEN] Generating standard token for {patient_email}...")
+        token = create_reset_token(patient_email) 
+        
+        print("\n" + "="*70)
+        print(f"🔥 SÜPER AKTİVASYON LİNKİ BURADA! TARAYICIYA YAPIŞTIR:\nhttp://localhost:5173/reset-password?token={token}")
+        print("="*70 + "\n")
+        
+        print(f"🔄 [SMTP] Attempting to fire email via Mailtrap...")
+        # 💥 EN KRİTİK DÜZELTME: Eğer email fonksiyonun async ise önüne 'await' gelmeli!
+        # Hem normal hem async senkronizasyonu için burayı güvenli çağırıyoruz:
+        import inspect
+        if inspect.iscoroutinefunction(send_reset_email):
+            await send_reset_email(patient_email, token, "patient")
+        else:
+            send_reset_email(patient_email, token, "patient")
+            
         print(f"🚀 [MAILTRAP SUCCESS] Activation trigger sent to {patient_email}")
     except Exception as email_err:
-        print(f"⚠️ [MAILTRAP COLD ERROR] Pipeline reached but SMTP failed: {str(email_err)}")
+        print(f"❌ [CRITICAL MAIL PIPELINE ERROR] Token or SMTP crashed: {str(email_err)}")
+        traceback.print_exc() 
 
     return new_patient
 
 
 # PUT update patient (ADMIN)
-# app/routers/patients.py içindeki PUT fonksiyonunu bununla değiştirin:
-
 @router.put("/{patient_id}", response_model=schemas.PatientRead)
 def update_patient(
     patient_id: int,
@@ -112,19 +120,16 @@ def update_patient(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(admin_required),
 ):
-    # 1. Güncellenmek istenen hastayı veritabanında bul
     db_patient = db.query(models.Patient).filter(models.Patient.id == patient_id).first()
     if not db_patient:
         raise HTTPException(status_code=404, detail="Patient not found")
         
-    # 2. Alanları frontend'den gelen yeni verilerle güncelle
     db_patient.name = patient_update.name
     db_patient.phone = patient_update.phone
     
     if patient_update.email:
         db_patient.email = patient_update.email.strip()
 
-    # 3. Değişiklikleri veritabanına kesin olarak KAYDET
     try:
         db.commit()
         db.refresh(db_patient)

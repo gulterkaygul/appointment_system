@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime, date
 from fastapi import HTTPException, status
 
@@ -204,7 +204,9 @@ def delete_appointment(db: Session, appointment_id: int):
 def get_today_appointments(db: Session, doctor_id: int):
     today = date.today()
 
-    return db.query(Appointment).filter(
+    return db.query(Appointment).options(
+        joinedload(Appointment.patient)
+        ).filter(
         Appointment.doctor_id == doctor_id,
         Appointment.is_deleted == False,
         Appointment.appointment_time >= datetime.combine(today, datetime.min.time()),

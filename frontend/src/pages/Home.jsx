@@ -71,13 +71,63 @@ const openModal = () => {
     }
   };
 
-  const handleConfirm = async () => {
-    if (!name || !phone || !doctor || !department || !date || !time || !kvkk) {
+ const handleConfirm = async () => {
+    // 1. Alanların doluluk kontrolü
+    if (!name || !phone || !email || !doctor || !department || !date || !time || !kvkk) {
       alert("Please fill in all required fields.");
       return;
     }
-    alert("Appointment successfully created");
-    closeModal();
+
+    // Backend'in beklediği tarih + saat formatını birleştiriyoruz (Örn: 2026-05-20T14:00:00)
+    const appointment_time = `${date}T${time}:00`;
+
+    // Backend'deki şemaya (PublicAppointmentCreate) uygun veriyi hazırlıyoruz
+    const requestBody = {
+      patient_name: name,
+      patient_phone: phone,
+      email: email,
+      doctor_id: parseInt(doctor),
+      department: department,
+      appointment_time: appointment_time,
+      complaint: complaint || ""
+    };
+
+    console.log("🚀 [FRONTEND] Backend'e istek atılıyor:", requestBody);
+
+    try {
+      // 2. Python backend sunucuna gerçek bir ağ isteği fırlatıyoruz!
+      const res = await fetch("http://127.0.0.1:8000/public/appointments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // BAŞARILI DURUM: Mailtrap tetiklendi!
+        alert("Appointment successfully created! Check your Mailtrap inbox for activation mail.");
+        
+        // Form alanlarını sıfırla
+        setName("");
+        setPhone("");
+        setDoctor("");
+        setDepartment("");
+        setDate("");
+        setTime("");
+        setComplaint("");
+        setKvkk(false);
+        closeModal();
+      } else {
+        // BACKEND'DEN HATA DÖNERSE (Örn: Saat çakışması veya DB hatası)
+        alert(`Error (${res.status}): ${data.detail || "Something went wrong"}`);
+      }
+    } catch (err) {
+      console.error("❌ Sunucu bağlantı hatası:", err);
+      alert("Could not connect to the backend server. Make sure your Python server is running!");
+    }
   };
 
   return (
@@ -174,12 +224,12 @@ const openModal = () => {
                       <input className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white col-span-2" placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} />
                       <select className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white" value={doctor} onChange={e => setDoctor(e.target.value)}>
                         <option value="">Select Doctor *</option>
-                        <option value="1">Dr. Ahmet Kaya</option>
-                        <option value="2">Dr. Elif Demir</option>
-                        <option value="3">Dr. Can Özkan</option>
-                        <option value="4">Dr. Ayşe Çelik</option>
-                        <option value="5">Dr. Mehmet Yıldız</option>
-                        <option value="6">Dr. Zeynep Arslan</option>
+                        <option value="6">Dr. Ahmet Kaya</option>
+                        <option value="7">Dr. Elif Demir</option>
+                        <option value="10">Dr. Can Özkan</option>
+                        <option value="9">Dr. Ayşe Çelik</option>
+                        <option value="8">Dr. Mehmet Yılmaz</option>
+                        <option value="11">Dr. Zeynep Arslan</option>
 
                       </select>
                       <select className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white" value={department} onChange={e => setDepartment(e.target.value)}>
@@ -225,8 +275,26 @@ const openModal = () => {
         <p className="max-w-4xl mb-12 text-lg text-[#CFE6F7]">Our Dental Hospital combines academic excellence and modern infrastructure.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {[
-            { title: "Advanced Medical Technology", img: "https://neu.edu.tr/wp-content/uploads/2022/01/11/Yakin-Dogu-Universitesi-Dis-Hastanesi-scaled.jpg", text: "State-of-the-art diagnostic technologies." },
-            { title: "Expert Academic Staff", img: "https://photos.wikimapia.org/p/00/08/10/12/94_big.jpg", text: "Highly experienced dentists." }
+            {
+              title: "Advanced Medical Technology",
+              img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1jw9Rw7hY0CvwRteiMer_xaNw1YLK-EpHUg&s",
+              text: "State-of-the-art diagnostic technologies.",
+            },
+            {
+              title: "Expert Academic Staff",
+              img: "https://photos.wikimapia.org/p/00/08/10/12/94_big.jpg",
+              text: "Highly experienced dentists.",
+            },
+            {
+             title: "Modern Treatment Rooms",
+             img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8MqYKQA_D2BsYr3Bf_IBFdIiEvw4NcuaNYQ&s",
+             text: "Comfortable and modern patient rooms.",
+  },
+  {
+             title: "24/7 Emergency Support",
+             img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQy53gD6BryALjB9zuNmu95ied0fRBIm104CQ&s",
+             text: "Emergency dental healthcare services anytime.",
+  },
           ].map((item, i) => (
             <div key={i} className="relative h-80 rounded-2xl overflow-hidden shadow-xl">
               <img src={item.img} alt={item.title} className="absolute inset-0 w-full h-full object-cover" />

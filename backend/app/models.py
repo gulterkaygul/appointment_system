@@ -24,10 +24,10 @@ class Patient(Base, AuditMixin):
     name = Column(String)
     phone = Column(String)
     
-    # 🔥 YENİ: CRUD işlemlerinde TypeError almamak için email sütunu eklendi
+    # YENİ: CRUD işlemlerinde TypeError almamak için email sütunu eklendi
     email = Column(String, nullable=True) 
 
-    # 🔥 user bağlantısı
+    # user bağlantısı
     user_id = Column(Integer, ForeignKey("public.users.id"), nullable=True)
 
     # ilişkiler
@@ -46,6 +46,8 @@ class Appointment(Base, AuditMixin):
 
     patient_id = Column(Integer, ForeignKey("public.patients.id"))
     doctor_id = Column(Integer, ForeignKey("public.users.id"))
+
+    patient = relationship("Patient", back_populates="appointments")
 
     appointment_time = Column(DateTime)
     status = Column(String, default="planned")
@@ -70,8 +72,8 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     role = Column(String)  # doctor / admin / patient
 
-    # 🔥 doktor için ilişkiler
+    # doktor için ilişkiler
     doctor_appointments = relationship("Appointment", back_populates="doctor")
 
-    # 🔥 hasta için profil (1-1)
+    # hasta için profil (1-1)
     patient_profile = relationship("Patient", back_populates="user", uselist=False)

@@ -17,6 +17,7 @@ class PatientCreate(PatientBase):
 
 class PatientRead(PatientBase):
     id: int
+    name: str
 
     class Config:
         from_attributes = True
@@ -49,9 +50,8 @@ class AppointmentRead(BaseModel):
     id: int
     appointment_time: datetime
     status: str
-
+    department: str
     patient: PatientMini   
-
     doctor_id: Optional[int]
     department: Optional[str]
     complaint: Optional[str]
