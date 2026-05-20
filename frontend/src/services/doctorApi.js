@@ -14,6 +14,6 @@ export const getMyAppointments = async () => {
 
 // Bugünkü randevular
 export const getTodayAppointments = async () => {
-  const res = await API.get("/doctor/today");
+  const res = await API.get("/doctor/appointments/today");
   return res.data;
 };

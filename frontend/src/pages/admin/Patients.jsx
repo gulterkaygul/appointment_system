@@ -45,7 +45,7 @@ export default function Patients() {
         Authorization: `Bearer ${token}`,
       },
 
-      //  EMAIL SORUNU ÇÖZÜLDÜ
+      // 🔥 EMAIL SORUNU ÇÖZÜLDÜ
       body: JSON.stringify({
         name,
         phone,

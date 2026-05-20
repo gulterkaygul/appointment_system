@@ -37,15 +37,32 @@ export default function Appointments() {
     }
   };
 
+  const updateAppointmentStatus = async (appointmentId, newStatus) => {
+  try {
+    // Projenizdeki otomatik token ekleyen 'api' yapısını kullanıyoruz
+    await api.put(`/appointments/${appointmentId}`, { status: newStatus });
+    
+    // Başarılıysa listeyi hemen yeniliyoruz
+    fetchAppointments();
+  } catch (error) {
+    console.error(error);
+    alert("Failed to update status. Make sure you are an admin.");
+  }
+};
+
   const statusColor = (status) => {
-    if (status === "approved")
-      return "bg-green-500/20 text-green-300 border border-green-400/20";
+  if (status === "approved")
+    return "bg-green-500/20 text-green-300 border border-green-400/20";
 
-    if (status === "cancelled")
-      return "bg-red-500/20 text-red-300 border border-red-400/20";
+  if (status === "rejected")
+    return "bg-red-500/20 text-red-300 border border-red-400/20";
 
-    return "bg-yellow-500/20 text-yellow-300 border border-yellow-400/20";
-  };
+  if (status === "completed")
+    return "bg-blue-500/20 text-blue-300 border border-blue-400/20";
+
+  // "planned" durumu veya gelebilecek diğer her şey için varsayılan olarak sarı döner
+  return "bg-yellow-500/20 text-yellow-300 border border-yellow-400/20";
+};
 
   if (loading) {
     return (
@@ -201,16 +218,19 @@ export default function Appointments() {
                   {new Date(a.appointment_time).toLocaleString()}
                 </td>
 
-                {/* STATUS */}
+                {/* STATUS (YENİ SEÇİM KUTULU HALİ) */}
                 <td className="p-5">
-                  <span
-                    className={`px-4 py-2 rounded-full text-sm font-semibold ${statusColor(
-                      a.status
-                    )}`}
-                  >
-                    {a.status}
-                  </span>
-                </td>
+                 <select
+                   value={a.status}
+                   onChange={(e) => updateAppointmentStatus(a.id, e.target.value)}
+                   className={`px-3 py-1.5 rounded-xl font-bold text-sm bg-white/10 border border-white/20 outline-none transition-all cursor-pointer ${statusColor(a.status)}`}
+                 >
+                   <option value="planned" className="bg-[#0F2740] text-yellow-400 font-semibold">Planned</option>
+                 <option value="approved" className="bg-[#0F2740] text-green-400 font-semibold">Approved</option>
+                 <option value="rejected" className="bg-[#0F2740] text-red-400 font-semibold">Rejected</option>
+                 <option value="completed" className="bg-[#0F2740] text-blue-400 font-semibold">Completed</option>
+               </select>
+            </td>
 
                 {/* ACTIONS */}
                 <td className="p-5 text-center">

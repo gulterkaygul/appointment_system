@@ -1,16 +1,9 @@
 import smtplib
-import os
-from dotenv import load_dotenv #python oto .env dosyasini okur
 from email.mime.text import MIMEText
 
-load_dotenv()
-
-# 1. Buraya 'role' parametresini ekledik (Dışarıdan gelecek)
 def send_reset_email(to_email: str, token: str, role: str):
-    # 2. Artık f-string içindeki {role} hata vermez, doğru çalışır
     reset_link = f"http://localhost:5173/reset-password?token={token}&type={role}"
 
-    # HTML içerik
     html_content = f"""
     <html>
         <body style="font-family: sans-serif; text-align: center;">
@@ -23,7 +16,6 @@ def send_reset_email(to_email: str, token: str, role: str):
                     Authorize Update
                 </a>
             </div>
-            <p style="font-size: 12px; color: #666;">If you didn't request this, you can safely ignore this email.</p>
         </body>
     </html>
     """
@@ -33,18 +25,15 @@ def send_reset_email(to_email: str, token: str, role: str):
     msg["From"] = "noreply@clinic.com"
     msg["To"] = to_email
 
-    try:
-        # Mailtrap Ayarları
-        server = smtplib.SMTP("sandbox.smtp.mailtrap.io", 587)
-        server.starttls()
+    # 🔥 TRY-EXCEPT BLOĞUNU KALDIRDIK! HATA NEBEYSE TERMİNALE PATLAYACAK!
+    # Eğer port engeli varsa alternatif port olan 2525'i deniyoruz:
+    server = smtplib.SMTP("sandbox.smtp.mailtrap.io", 2525) 
+    server.starttls()
 
-        server.login(
-            os.getenv("MAIL_USERNAME"),
-            os.getenv("MAIL_PASSWORD")
-        )
+    username = "7f388a3f874fd6" 
+    password = "473775a81bd33b"
 
-        server.send_message(msg)
-        server.quit()
-        print(f"Reset email sent to {to_email} with role {role}")
-    except Exception as e:
-        print(f"SMTP Error: {e}")
+    server.login(username, password)
+    server.send_message(msg)
+    server.quit()
+    print(f"🚀 [SMTP SUCCESS] Mailtrap'e mail başarıyla fırlatıldı! Alıcı: {to_email}")

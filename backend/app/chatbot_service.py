@@ -44,22 +44,24 @@ db_chain = SQLDatabaseChain.from_llm(llm, db, prompt=CUSTOM_PROMPT, verbose=True
 def get_chatbot_response(user_query):
     query_lower = user_query.lower().strip()
     
-    # 🛑 SECURITY FILTER (Code-Level Protection)
+    # SECURITY FILTER (Sadece kötü niyetli listeleme/görme isteklerini engellemek için güncellendi)
     dangerous_keywords = ["password", "şifre", "sifre", "parola", "credential", "token", "hash", "pin"]
+    # Kullanıcı "şifremi unuttum" veya "şifre oluştur" gibi meşru bir işlem tetiklemiyorsa, sadece direkt şifre verilerini sızdırmaya çalışıyorsa engelle
     if any(keyword in query_lower for keyword in dangerous_keywords):
-        return "Due to our privacy and security policies, user passwords or personal access credentials can never be shared or displayed."
+        if not any(action in query_lower for action in ["unuttum", "forgot", "create", "oluştur", "olustur", "guncelle", "update"]):
+            return "Due to our privacy and security policies, user passwords or personal access credentials can never be shared or displayed."
 
-    # 🌟 GREETING FILTER
+    # GREETING FILTER
     greeting_keywords = ["hello", "hi", "hey", "hii", "hiii", "greetings", "selam", "merhaba", "slm"]
     if query_lower in greeting_keywords:
         return "Hello! I am your Dental Hospital Assistant. How can I help you today? You can ask about appointment bookings or hospital information."
         
-    # 🌸 POLITENESS & THANK YOU FILTER
+    # POLITENESS & THANK YOU FILTER
     thanks_keywords = ["thank you", "thanks", "thx", "thank you so much", "tesekkurler", "teşekkürler"]
     if query_lower in thanks_keywords:
         return "You're very welcome! It was a pleasure helping you. We wish you a healthy and happy day! Let me know if you need anything else."
 
-    # 📅 INITIAL APPOINTMENT REQUEST FILTER (Şimdi telefon numarasını da istiyor!)
+    # INITIAL APPOINTMENT REQUEST FILTER
     if ("appointment" in query_lower or "book" in query_lower or "randevu" in query_lower) and not any(char.isdigit() for char in query_lower):
         return "I would be happy to help you book an appointment. Please provide the following details separated by commas: Patient Full Name, Phone Number, Doctor Name, Desired Date and Time. (e.g., Cem Ak, 05551234567, Dr. Ahmet Kaya, 2026-06-02 14:00)"
 
@@ -84,11 +86,11 @@ def get_chatbot_response(user_query):
             response = db_chain.invoke({"query": user_query})
             result_text = str(response.get("result", ""))
             
-            # 🛑 SECURITY FILTER 2 (AI Block Check)
-            if "SECURITY_BLOCK" in result_text or "password" in result_text.lower() or "şifre" in result_text.lower():
+            # SECURITY FILTER 2 (AI Block Check - Meşru işlemler hariç tutuldu)
+            if "SECURITY_BLOCK" in result_text and not any(action in query_lower for action in ["unuttum", "forgot", "create", "oluştur", "olustur"]):
                 return "Due to security regulations, sharing password or credential information is strictly prohibited."
             
-            # ✨ SQL CLEANING WIZARD
+            # SQL CLEANING WIZARD
             if "Answer:" in result_text:
                 result_text = result_text.split("Answer:")[-1].strip()
                 
@@ -99,7 +101,7 @@ def get_chatbot_response(user_query):
 
     except Exception as e:
         print(f"❌ [SYSTEM ERROR] {str(e)}")
-        if any(keyword in query_lower for keyword in dangerous_keywords):
+        if any(keyword in query_lower for keyword in dangerous_keywords) and not any(action in query_lower for action in ["unuttum", "forgot", "create", "oluştur", "olustur"]):
             return "Access denied for security reasons."
             
         try:

@@ -90,14 +90,23 @@ def update_appointment(
     db: Session = Depends(get_db),
     current_user: User = Depends(admin_required),
 ):
-    updated = crud.update_appointment(
-        db=db,
-        appointment_id=appointment_id,
-        status=update_data.status
-    )
-    if not updated:
+    # 1. Güncellenmek istenen randevuyu veritabanında bul
+    appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
+    if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    return updated
+        
+    # 2. Durumu güncelle
+    appointment.status = update_data.status
+
+    # 3. Veritabanına kesin olarak kaydet
+    try:
+        db.commit()
+        db.refresh(appointment)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    return appointment
 
 @router.put("{appointment_id}/status")
 def update_status(
