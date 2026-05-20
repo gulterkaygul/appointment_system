@@ -1,32 +1,32 @@
 export default function Doctors() {
   const doctors = [
     {
-      name: "Dr. Canan Demir",
+      name: "Dr. Elif Demir",
       title: "Orthodontist",
       img: "https://png.pngtree.com/png-clipart/20230918/ourmid/pngtree-happy-beautiful-doctor-smiling-while-showing-something-png-image_10132993.png",
     },
     {
-      name: "Dr. Ahmet Yıldız",
+      name: "Dr. Ahmet Kaya",
       title: "Endodontist",
       img: "https://png.pngtree.com/png-vector/20240513/ourmid/pngtree-ai-generated-young-handsome-doctor-with-stethoscope-art-png-image_12441086.png",
     },
     {
-      name: "Dr. Elif Demir",
+      name: "Dr. Zeynep Arslan",
       title: "Pediatric Dentist",
       img: "https://png.pngtree.com/png-vector/20241109/ourmid/pngtree-a-confident-and-caring-young-woman-doctor-with-warm-smile-png-image_14336533.png",
     },
     {
-      name: "Dr. Mehmet Kaya",
+      name: "Dr. Mehmet Yıldız",
       title: "Prosthodontist",
       img: "https://png.pngtree.com/png-vector/20250128/ourmid/pngtree-smiling-young-doctor-in-medical-uniform-and-stethoscope-png-image_15354017.png",
     },
     {
-      name: "Dr. Ayşe Korkmaz",
+      name: "Dr. Ayşe Çelik",
       title: "Oral & Maxillofacial Surgeon",
       img: "https://png.pngtree.com/png-vector/20240612/ourmid/pngtree-women-doctor-picture-png-image_12725826.png",
     },
     {
-      name: "Dr. Burak Şahin",
+      name: "Dr. Can Özkan",
       title: "Periodontist",
       img: "https://png.pngtree.com/png-vector/20241115/ourmid/pngtree-handsome-male-doctor-posing-photo-smiling-png-image_14423112.png",
     },

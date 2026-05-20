@@ -19,15 +19,12 @@ export default function Home() {
   const [complaint, setComplaint] = useState("");
   const [kvkk, setKvkk] = useState(false);
   const [email, setEmail] = useState("");
-  const [birthDate, setBirthDate] = useState("");
   const [password, setPassword] = useState("");
 
-  const openModal = () => {
-    const token = localStorage.getItem("token");
-    if (token) setView("appointment");
-    else setView("login");
-    setOpen(true);
-  };
+const openModal = () => {
+  setView("login");
+  setOpen(true);
+};
 
   const closeModal = () => {
     setOpen(false);
@@ -110,13 +107,6 @@ export default function Home() {
                 {/* MODERN LIVE CHAT WIDGET */}
 <div className="mt-6">
 
-  {/* BUTTON (glass effect) */}
-  <button
-    onClick={() => setChatOpen(!chatOpen)}
-    className="flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full shadow-lg hover:scale-105 transition"
-  >
-    💬 Live Support
-  </button>
 
   {/* CHAT PANEL */}
   {chatOpen && (
@@ -165,7 +155,7 @@ export default function Home() {
             ) : (
               <motion.div key="form-view" initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="w-full max-w-lg mx-auto py-4">
                 {view === "login" ? (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-3">
                     <h2 className="text-3xl font-bold mb-2 text-white">Giriş Yap</h2>
                     <input className="bg-[#0B2A4A] border border-blue-400/30 p-3 rounded-lg text-white" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
                     <input className="bg-[#0B2A4A] border border-blue-400/30 p-3 rounded-lg text-white" type="password" placeholder="Şifre" value={password} onChange={e => setPassword(e.target.value)} />
@@ -182,20 +172,37 @@ export default function Home() {
                       <input className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white" placeholder="Full Name *" value={name} onChange={e => setName(e.target.value)} />
                       <input className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white" placeholder="Phone *" value={phone} onChange={e => setPhone(e.target.value)} />
                       <input className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white col-span-2" placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} />
-                      {view === "register" && <input type="date" className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white" value={birthDate} onChange={e => setBirthDate(e.target.value)} />}
                       <select className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white" value={doctor} onChange={e => setDoctor(e.target.value)}>
                         <option value="">Select Doctor *</option>
-                        <option value="6">Dr. Ahmet Kaya</option>
-                        <option value="7">Dr. Elif Demir</option>
+                        <option value="1">Dr. Ahmet Kaya</option>
+                        <option value="2">Dr. Elif Demir</option>
+                        <option value="3">Dr. Can Özkan</option>
+                        <option value="4">Dr. Ayşe Çelik</option>
+                        <option value="5">Dr. Mehmet Yıldız</option>
+                        <option value="6">Dr. Zeynep Arslan</option>
+
                       </select>
                       <select className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white" value={department} onChange={e => setDepartment(e.target.value)}>
                         <option value="">Select Department *</option>
                         <option>Dental Examination</option>
+                        <option>Tooth Filling</option>
+                        <option>Root Canal Treatment</option>
+                        <option>Orthodontics</option>
                       </select>
                       <input type="date" className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white" value={date} onChange={e => setDate(e.target.value)} />
                       <select className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white" value={time} onChange={e => setTime(e.target.value)}>
                         <option value="">Time *</option>
-                        {["08:00","09:00","10:00"].map(t => <option key={t}>{t}</option>)}
+                        {[ "08:00",
+                             "09:00",
+                             "10:00",
+                             "11:00",
+                             "12:00",
+                             "13:00",
+                             "14:00",
+                             "15:00",
+                             "16:00",
+                             "17:00"  ].map(t => ( <option key={t}>{t}</option>
+))}
                       </select>
                       <textarea className="bg-[#0B2A4A] border border-blue-400/30 p-2 rounded text-white col-span-2" rows={2} placeholder="Complaint" value={complaint} onChange={e => setComplaint(e.target.value)} />
                     </div>
@@ -308,6 +315,7 @@ export default function Home() {
         <button className="w-full bg-[#0A66C2] py-3 rounded font-bold hover:bg-[#084C91] transition">
           Send Message
         </button>
+        
 
       </div>
     </div>
@@ -315,6 +323,7 @@ export default function Home() {
   </div>
 </section>
       <Footer />
+      
     </div>
   );
-}
+} 

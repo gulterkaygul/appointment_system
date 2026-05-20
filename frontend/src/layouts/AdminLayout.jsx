@@ -26,13 +26,7 @@ export default function AdminLayout() {
           </nav>
         </div>
 
-        {/*  LOGOUT */}
-        <button
-          onClick={handleLogout}
-          className="mt-10 bg-red-600 hover:bg-red-700 py-2 rounded-xl font-semibold transition"
-        >
-          Logout
-        </button>
+
       </aside>
 
       {/* CONTENT */}
