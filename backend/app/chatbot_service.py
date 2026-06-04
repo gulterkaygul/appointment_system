@@ -5,9 +5,6 @@ from langchain_experimental.sql import SQLDatabaseChain
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# 1. Settings and Connections
-os.environ["GOOGLE_API_KEY"] = "AIzaSyB3Hbg9DzFKRfg7ImeR0xm-8wSZnab_reE"
-
 DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME = "postgres", "1234", "localhost", "5432", "dentist_appointment_db"
 pg_uri = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
