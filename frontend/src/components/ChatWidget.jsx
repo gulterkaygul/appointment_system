@@ -3,8 +3,13 @@ import axios from 'axios';
 
 const ChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
+    
+    // 🌟 Sadece bu başlangıç mesajı alanı çift dilli dil seçimi sunacak şekilde güncellendi
     const [messages, setMessages] = useState([
-        { text: "Hello! I am your Dental Hospital Assistant. How can I help you today?", isBot: true }
+        { 
+            text: "Welcome! Please select your communication language:\n👉 Type '1' for English\n\nYakın Doğu Üniversitesi Diş Hastanesi'ne hoş geldiniz! Lütfen iletişim dilinizi seçiniz:\n👉 Türkçe için '2' yazınız", 
+            isBot: true 
+        }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
