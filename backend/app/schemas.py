@@ -51,7 +51,7 @@ class AppointmentRead(BaseModel):
     appointment_time: datetime
     status: str
     department: str
-    patient: PatientMini   
+    patient: Optional[PatientMini] = None  
     doctor_id: Optional[int]
     department: Optional[str]
     complaint: Optional[str]

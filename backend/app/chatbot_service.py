@@ -5,11 +5,13 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.utilities import SQLDatabase
 from dotenv import load_dotenv
 
+# 1. Ortam değişkenlerini yükle
 load_dotenv(override=True)
 
-# Veritabanı bağlantı adresi
-pg_uri = "postgresql+psycopg2://postgres:1234@localhost:5432/dentist_appointment_db"
-
+# 2. Doğrudan WSL (Linux) içindeki yerel PostgreSQL'e bağlan
+pg_uri = "postgresql+psycopg2://postgres:1234@127.0.0.1:5432/dentist_appointment_db"
+    
+# 3. Veritabanı bağlantısı
 db = SQLDatabase.from_uri(pg_uri, include_tables=['patients', 'appointments', 'users'])
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3)
 current_date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -71,14 +73,18 @@ def get_chatbot_response(user_query):
         if query_clean in ["1", "en", "English", "english", "EN"]:
             user_session["lang"] = "EN"
             user_session["step"] = "MAIN_FLOW"
+            # ✨ BURADA DOĞRUDAN RETURN EDEREK AŞAĞIDAKİ "1" KOŞULLARINA TAKILMASINI ENGELLİYORUZ
             return "Language set to English. Welcome to the Near East University Dental Hospital!\n\n👉 Please type the number of your action:\n1️⃣ Check my current appointments\n2️⃣ Doctor availability and empty hours\n3️⃣ General treatment types and information"
+            
         elif query_clean in ["2", "tr", "Türkçe", "turkce", "TR", "türkçe"]:
             user_session["lang"] = "TR"
             user_session["step"] = "MAIN_FLOW"
+            # ✨ BURADA DOĞRUDAN RETURN EDEREK AŞAĞIDAKİ "2" KOŞULLARINA TAKILMASINI ENGELLİYORUZ
             return "Dil Türkçe olarak ayarlandı. Yakın Doğu Üniversitesi Diş Hastanesi'ne hoş geldiniz!\n\n👉 Lütfen yapmak istediğiniz işlemin numarasını yazınız:\n1️⃣ Mevcut Randevularımı Sorgulama\n2️⃣ Doktor Boşlukları ve Müsait Saatleri Öğrenme\n3️⃣ Tedavi Çeşitleri ve Hastane Bilgisi Alma"
+            
         else:
             return "Please select your language / Lütfen iletişim dilinizi seçiniz:\n👉 Type '1' for English\n👉 Türkçe için '2' yazınız"
-
+        
     # GİRİŞ YAPMA TALEBİ KONTROLÜ
     if any(kw in query_lower for kw in ["giriş yap", "giris yap", "log in", "login"]):
         if user_session.get("lang") == "TR":
@@ -112,18 +118,27 @@ def get_chatbot_response(user_query):
     # -------------------------------------------------------------------------
     if intent == "MY_APPOINTMENTS":
         if not user_session["is_authenticated"]:
-            return "Kişisel randevularınızı görebilmeniz için önce giriş yapmanız gerekmektedir. Lütfen 'Giriş yap' yazarak kimliğinizi doğrulayınız." if user_session.get("lang") == "TR" else "To see your personal appointments, please type 'Log in' first."
+            return (
+                "Kişisel randevularınızı görebilmeniz için önce giriş yapmanız gerekmektedir. Lütfen 'Giriş yap' yazarak kimliğinizi doğrulayınız." 
+                if user_session.get("lang") == "TR" 
+                else "To see your personal appointments, please type 'Log in' first."
+            )
 
         try:
             safe_name = user_session["full_name"].replace("'", "''")
+            # Sadece bugünden itibaren (gün bazlı) aktif randevuları getir
             raw_sql = f"""
                 SELECT a.appointment_time, a.department, u.full_name AS doctor_name 
                 FROM appointments AS a
                 JOIN patients AS p ON a.patient_id = p.id
                 LEFT JOIN users AS u ON a.doctor_id = u.id
-                WHERE p.name = '{safe_name}' AND a.is_deleted = FALSE
-                ORDER BY a.appointment_time;
+                WHERE p.name ILIKE '{safe_name}' 
+                  AND a.is_deleted = FALSE 
+                  AND a.appointment_time::date >= CURRENT_DATE -- 🌟 Saat farkından etkilenmez, günü esas alır!
+                ORDER BY a.appointment_time ASC
+                LIMIT 1;
             """
+
             db_results = db.run(raw_sql)
             
             if not db_results or db_results == "[]" or db_results == "":
@@ -137,30 +152,65 @@ def get_chatbot_response(user_query):
             date_match = re.search(r"datetime\.datetime\((\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+)", parts[0])
             if date_match:
                 y, m, d, hr, mn = date_match.groups()
-                formatted_date = f"{d.zfill(2)}/{m.zfill(2)}/{y} saat {hr.zfill(2)}:{mn.zfill(2)}"
+                # Dil durumuna göre tarih formatını ayarlayalım
+                if user_session.get("lang") == "TR":
+                    formatted_date = f"{d.zfill(2)}/{m.zfill(2)}/{y} saat {hr.zfill(2)}:{mn.zfill(2)}"
+                else:
+                    formatted_date = f"{m.zfill(2)}/{d.zfill(2)}/{y} at {hr.zfill(2)}:{mn.zfill(2)}"
             else:
-                formatted_date = "Belirtilmeyen bir tarihte"
+                formatted_date = "Belirtilmeyen bir tarihte" if user_session.get("lang") == "TR" else "An unspecified date"
                 
-            dept = parts[1].replace("'", "").strip() if len(parts) > 1 else "Genel Klinik"
-            if "General Dentistry" in dept or "None" in dept:
-                dept = "Genel Diş Hekimliği"
-            elif "Orthodontics" in dept:
-                dept = "Ortodonti"
+            # Bölüm verisi temizliği ve dil yönetimi
+            dept_raw = parts[1].replace("'", "").strip() if len(parts) > 1 else "None"
+            if user_session.get("lang") == "TR":
+                if "General Dentistry" in dept_raw or "None" in dept_raw or "Genel" in dept_raw:
+                    dept = "Genel Diş Hekimliği"
+                elif "Orthodontics" in dept_raw or "Ortodonti" in dept_raw:
+                    dept = "Ortodonti"
+                else:
+                    dept = dept_raw
+            else:
+                if "General Dentistry" in dept_raw or "None" in dept_raw or "Genel" in dept_raw:
+                    dept = "General Dentistry"
+                elif "Orthodontics" in dept_raw or "Ortodonti" in dept_raw:
+                    dept = "Orthodontics"
+                else:
+                    dept = dept_raw
             
-            doctor_name = "Henüz Atanmadı"
+            # Hekim adı temizliği ve dil yönetimi
+            doctor_name = "Henüz Atanmadı" if user_session.get("lang") == "TR" else "Not Assigned Yet"
             if len(parts) > 2:
                 doc_clean = parts[2].replace("'", "").replace("None", "").strip()
                 if doc_clean and doc_clean != "None":
                     doctor_name = doc_clean
 
+            # Başarılı sonuç ekranı (Dil bazlı)
             if user_session.get("lang") == "TR":
-                return f"🗓️ **Randevu Bilgileriniz Bulundu Sayın {user_session['full_name']}:**\n\n• **Tarih:** {formatted_date}\n• **Bölüm:** {dept}\n• **Hekim:** {doctor_name}\n• **Durum:** Aktif / Onaylandı\n\n*Yakın Doğu Üniversitesi Diş Hastanesi sağlıklı günler diler!*"
+                return (
+                    f"🗓️ **Randevu Bilgileriniz Bulundu Sayın {user_session['full_name']}:**\n\n"
+                    f"• **Tarih:** {formatted_date}\n"
+                    f"• **Bölüm:** {dept}\n"
+                    f"• **Hekim:** {doctor_name}\n"
+                    f"• **Durum:** Aktif / Onaylandı\n\n"
+                    f"*Yakın Doğu Üniversitesi Diş Hastanesi sağlıklı günler diler!*"
+                )
             else:
-                return f"🗓️ **Appointment Details Found for {user_session['full_name']}:**\n\n• **Date:** {formatted_date}\n• **Department:** {dept}\n• **Doctor:** {doctor_name}\n• **Status:** Active / Confirmed\n\n*Have a healthy day!*"
+                return (
+                    f"🗓️ **Appointment Details Found for {user_session['full_name']}:**\n\n"
+                    f"• **Date:** {formatted_date}\n"
+                    f"• **Department:** {dept}\n"
+                    f"• **Doctor:** {doctor_name}\n"
+                    f"• **Status:** Active / Confirmed\n\n"
+                    f"*Have a healthy day!*"
+                )
                 
         except Exception as e:
-            return f"🗓️ **Randevu Bilgileriniz Veritabanından Çekildi Sayın {user_session['full_name']}:**\n\n{db_results}"
-
+            # Hata durumunda kullanıcıya çiğ veri/hata yerine temiz dilde uyarı dönüyoruz
+            if user_session.get("lang") == "TR":
+                return f"❌ **Üzgünüm Sayın {user_session.get('full_name', '')}, randevu bilgileriniz getirilirken sistemsel bir hata oluştu.** Lütfen daha sonra tekrar deneyiniz."
+            else:
+                return f"❌ **Sorry {user_session.get('full_name', '')}, a system error occurred while retrieving your appointment details.** Please try again later."
+            
     # -------------------------------------------------------------------------
     # SEÇENEK 2: DOKTOR SORGULAMA KANALI
     # -------------------------------------------------------------------------
@@ -186,11 +236,12 @@ def get_chatbot_response(user_query):
                     return "👩‍⚕️👨‍⚕️ **Hastanemizde Görevli Aktif Hekimlerimiz:**\n\n• Dr. Ahmet Kaya\n• Dr. Ayşe Çelik\n• Dr. Can Özkan\n• Dr. Elif Demir\n• Dr. Mehmet Yıldız\n• Dr. Zeynep Arslan\n\n👉 Boş saatlerini öğrenmek istediğiniz hekimimizin adını doğrudan yazabilirsiniz."
                 return "👩‍⚕️👨‍⚕️ **Our Active Medical Staff:**\n\n• Dr. Ahmet Kaya\n• Dr. Ayşe Çelik\n• Dr. Can Özkan\n• Dr. Elif Demir\n• Dr. Mehmet Yıldız\n• Dr. Zeynep Arslan\n\n👉 Please type the name of the doctor directly to see empty hours."
 
-        # AŞAMA B: Belirli bir doktor ismi algılandıysa boş slotları ara
+        # AŞAMA B: Belirli bir doktor ismi algılandıysa müsait saatleri ara
         try:
             doctor_filter = ""
-            detected_doctor = "Dr. Mehmet Yıldız"
+            detected_doctor = "Değerli Hekimimiz" if current_lang == "TR" else "Our Doctor"
             
+            # Doktor ismi eşleştirmeleri
             if "elif" in query_lower or "demir" in query_lower:
                 doctor_filter = "AND u.full_name ILIKE '%Elif%'"
                 detected_doctor = "Dr. Elif Demir"
@@ -220,16 +271,16 @@ def get_chatbot_response(user_query):
             """
             db_results = db.run(raw_sql)
 
+            # Müsait zaman bulunamadığında verilen cevap
             if not db_results or db_results == "[]" or db_results == "":
                 if current_lang == "TR":
-                    return f"Sistem Kontrolü: {detected_doctor} için şu anda online rezerve edilebilir boş slot bulunmamaktadır. Lütfen daha sonra tekrar deneyiniz."
-                return f"System Check: There are currently no available online slots for {detected_doctor}. Please try again later."
+                    return f"Sistem Kontrolü: {detected_doctor} için şu anda online rezerve edilebilecek müsait bir randevu saati bulunmamaktadır. Lütfen daha sonra tekrar deneyiniz."
+                return f"System Check: There are currently no available appointment times for {detected_doctor}. Please try again later."
 
-            # Yapay zekanın patlamaması için python katmanında tarihleri regex ile bulup temiz bir metne döküyoruz 🛠️
+            # Python katmanında tarihleri regex ile bulup temiz bir metne döküyoruz 🛠️
             dates_found = re.findall(r"datetime\.datetime\((\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+)", db_results)
             
             if dates_found:
-                # Ham SQL verisini temiz, okunabilir metne çevirdik!
                 formatted_slots = []
                 for y, m, d, hr, mn in dates_found:
                     formatted_slots.append(f"📅 {d.zfill(2)}/{m.zfill(2)}/{y} - ⏰ {hr.zfill(2)}:{mn.zfill(2)}")
@@ -238,21 +289,22 @@ def get_chatbot_response(user_query):
                 if current_lang == "TR":
                     return f"👩‍⚕️ {detected_doctor} için bulunan müsait randevu saatleri aşağıdadır:\n\n{slots_text}\n\n*Randevunuzu kesinleştirmek için web arayüzümüzü kullanabilirsiniz.*"
                 else:
-                    return f"👩‍⚕️ Available appointment slots for {detected_doctor}:\n\n{slots_text}\n\n*You can book these slots via our web interface.*"
+                    return f"👩‍⚕️ Available appointment times for {detected_doctor}:\n\n{slots_text}\n\n*You can book these times via our web interface.*"
 
-            # Eğer tarihler ayıklanamazsa güvenli liman olarak LLM promptunu tetikle
+            # Eğer tarihler ayıklanamazsa yedek olarak LLM promptunu tetikle
             interpretation_prompt = f"""
             You are the medical scheduler chatbot at 'Yakın Doğu Üniversitesi Diş Hastanesi'.
             Language Status: {current_lang} (CRITICAL: Write in this language!)
             Current Time: {current_date_str}
             Doctor: {detected_doctor}
-            Available Slots: "{db_results}"
+            Available Times: "{db_results}"
             
             Format the available dates/hours cleanly. Do not use asterisks (*) for formatting.
             """
             return llm.invoke(interpretation_prompt).content.strip()
-        except:
-            if user_session.get("lang", "TR") == "TR":
+            
+        except Exception as e:
+            if current_lang == "TR":
                 return "Seçtiğiniz hekimimizin randevu durumları şu anda güncellenmektedir. Lütfen daha sonra tekrar deneyiniz."
             return "The schedule for the selected doctor is currently being updated. Please try again later."
 
